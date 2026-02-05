@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>To Be Determined - Generic Recursion Applied to Algebraic Graphs
+</title>
+    <link rel="stylesheet" href="../css/default.css" />
+    <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="alternate" type="application/rss+xml" title="David Anekstein's blog - To Be Determined" href="./rss.xml">
+    <link rel="alternate" type="application/atom+xml" title="David Anekstein's blog - To Be Determined" href="./atom.xml">
+</head>
+
+<body>
+    <div id="header">
+        <div id="logo">
+            <a href="../">To Be Determined</a>
+        </div>
+        <button id="menu-toggle" aria-label="Toggle navigation">☰</button>
+        <div id="navigation">
+            <a href="../posts.html">Posts</a>
+            <a href="../projects.html">Projects</a>
+            <a href="../publications.html">Publications</a>
+            <a href="../about.html">About</a>
+        </div>
+    </div>
+
+    <main role="main">
+        <article>
+    <section class="header">
+        <h1>Generic Recursion Applied to Algebraic Graphs
+</h1>
+        <div class="info">
+            Posted on July 31, 2022
+            
+        </div>
+    </section>
+    <section>
+        <p>It would be such a shame if I couldn’t combine Rust, recursion schemes, and graphs into one blog post (with the added bonus of leaving out C++). So here we go!</p>
+<p>Just recently, <a href="https://recursion.wtf/posts/rust_schemes/">two</a> <a href="https://recursion.wtf/posts/rust_schemes_2/">articles</a> have surfaced describing generic recursion in Rust. I recommend reading them. There will likely be further posts in the series, but I didn’t want to wait to at least try out the basics
+of the <a href="https://docs.rs/recursion/0.1.0/recursion/index.html"><code>recursion</code></a> crate. Thinking of what recursive data structures could be tried, I decided to start by prototyping a Rust adaptation of <a href="https://github.com/snowleopard/alga"><code>alga</code></a>, a Haskell library for algebraic graphs.</p>
+<h2 id="representation">Representation</h2>
+<p><em>small aside: I’m focusing on <code>alga</code>’s
+<a href="https://hackage.haskell.org/package/algebraic-graphs-0.7/docs/Algebra-Graph.html#t:Graph"><code>Graph</code></a>
+type specifically, not the
+<a href="https://hackage.haskell.org/package/algebraic-graphs-0.7/docs/Algebra-Graph-Class.html#t:Graph"><code>Graph</code> <code>typeclass</code></a>
+it defines, of which many more-efficient representations are made an instance, because it was the simplest representation
+I could use to play with the <code>recursion</code> crate</em></p>
+<p>Below we have an adapted form of the datatype introduced in the paper <a href="https://github.com/snowleopard/alga-paper"><em>Algebraic Graphs with Class</em></a>.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>derive<span class="at">(</span><span class="bu">Debug</span><span class="op">,</span> <span class="bu">Clone</span><span class="at">)]</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">pub</span> <span class="kw">enum</span> RGraph<span class="op">&lt;</span>Val<span class="op">,</span> A<span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    Empty<span class="op">,</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    Vertex(Val)<span class="op">,</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    Overlay(A<span class="op">,</span> A)<span class="op">,</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    Connect(A<span class="op">,</span> A)<span class="op">,</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>A <code>Graph</code> can be one of:</p>
+<ol type="1">
+<li><p><code>Empty</code>: no vertices, no edges</p></li>
+<li><p><code>Vertex</code>: a single vertex of type <code>Val</code></p></li>
+<li><p><code>Overlay</code>: a graph built by taking the union of both sets of vertices, and both sets of edges <span class="math inline">(<em>V</em><sub>1</sub>∪<em>V</em><sub>2</sub>,<em>E</em><sub>1</sub>∪<em>E</em><sub>2</sub>)</span></p></li>
+<li><p><code>Connect</code>: a graph constructed by connecting the edges of the two graphs. This is done by unioning in the same way as <code>Overlay</code>, but additionally unioning the resulting edge set with the cross-product of both vertex sets <span class="math inline">(<em>V</em><sub>1</sub>∪<em>V</em><sub>2</sub>,<em>E</em><sub>1</sub>∪<em>E</em><sub>2</sub>∪<em>V</em><sub>1</sub>×<em>V</em><sub>2</sub>)</span></p></li>
+</ol>
+<p>For further detail, I encourage you to check out the paper and library.</p>
+<h2 id="functors-via-the-recursion-crate">Functors via the <code>recursion</code> crate</h2>
+<p>With the recursive definition out of the way, let’s make use of the <code>recursion</code> crate’s <code>RecursionTree</code> to make <code>RGraph</code> a functor, wrapping the type with a struct <code>Graph</code>:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">recursion::map_layer::</span>MapLayer<span class="op">;</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">recursion::recursive_tree::arena_eval::</span>ArenaIndex<span class="op">;</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">recursion::recursive_tree::</span>RecursiveTree<span class="op">;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="kw">pub</span> <span class="kw">type</span> RecursiveGraph<span class="op">&lt;</span>V<span class="op">&gt;</span> <span class="op">=</span> RecursiveTree<span class="op">&lt;</span>RGraph<span class="op">&lt;</span>V<span class="op">,</span> ArenaIndex<span class="op">&gt;,</span> ArenaIndex<span class="op">&gt;;</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="kw">impl</span><span class="op">&lt;</span>A<span class="op">,</span> B<span class="op">,</span> V<span class="op">&gt;</span> MapLayer<span class="op">&lt;</span>B<span class="op">&gt;</span> <span class="cf">for</span> RGraph<span class="op">&lt;</span>V<span class="op">,</span> A<span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">type</span> To <span class="op">=</span> RGraph<span class="op">&lt;</span>V<span class="op">,</span> B<span class="op">&gt;;</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">type</span> Unwrapped <span class="op">=</span> A<span class="op">;</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    <span class="kw">fn</span> map_layer<span class="op">&lt;</span>F<span class="op">:</span> <span class="bu">FnMut</span>(<span class="dt">Self</span><span class="pp">::</span>Unwrapped) <span class="op">-&gt;</span> B<span class="op">&gt;</span>(<span class="kw">self</span><span class="op">,</span> <span class="kw">mut</span> f<span class="op">:</span> F) <span class="op">-&gt;</span> <span class="dt">Self</span><span class="pp">::</span>To <span class="op">{</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>        <span class="kw">use</span> <span class="pp">RGraph::</span><span class="op">*;</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">match</span> <span class="kw">self</span> <span class="op">{</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>            Empty <span class="op">=&gt;</span> Empty<span class="op">,</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>            Vertex(v) <span class="op">=&gt;</span> Vertex(v)<span class="op">,</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>            Overlay(a<span class="op">,</span> b) <span class="op">=&gt;</span> Overlay(f(a)<span class="op">,</span> f(b))<span class="op">,</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>            Connect(a<span class="op">,</span> b) <span class="op">=&gt;</span> Connect(f(a)<span class="op">,</span> f(b))<span class="op">,</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Graph<span class="op">&lt;</span>V<span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>    inner<span class="op">:</span> RecursiveGraph<span class="op">&lt;</span>V<span class="op">&gt;</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<h2 id="constructors">Constructors</h2>
+<p>With that, we can now use catamorphisms and anamorphisms to destruct and construct this datatype for our purposes, starting with
+a method to construct a graph from a list of vertices:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">impl</span><span class="op">&lt;</span>V<span class="op">:</span> <span class="bu">Hash</span> <span class="op">+</span> <span class="bu">Eq</span> <span class="op">+</span> <span class="bu">Clone</span> <span class="op">+</span> <span class="bu">Debug</span><span class="op">&gt;</span> Graph<span class="op">&lt;</span>V<span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">/// Constructs a [`Graph`] from a vector of vertices</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> <span class="kw">fn</span> vertices(vs<span class="op">:</span> <span class="dt">Vec</span><span class="op">&lt;</span>V<span class="op">&gt;</span>) <span class="op">-&gt;</span> <span class="dt">Self</span> <span class="op">{</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>        Graph <span class="op">{</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>            inner<span class="op">:</span> <span class="pp">RecursiveGraph::</span>expand_layers(vs<span class="op">,</span> <span class="op">|</span><span class="kw">mut</span> remaining<span class="op">|</span> <span class="op">{</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>                <span class="kw">use</span> <span class="pp">RGraph::</span><span class="op">*;</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>                <span class="cf">match</span> remaining<span class="op">.</span>len() <span class="op">{</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>                    <span class="dv">0</span> <span class="op">=&gt;</span> Empty<span class="op">,</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>                    <span class="dv">1</span> <span class="op">=&gt;</span> Vertex(remaining<span class="op">.</span>pop()<span class="op">.</span>unwrap())<span class="op">,</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>                    _ <span class="op">=&gt;</span> <span class="op">{</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>                        <span class="kw">let</span> ending_half <span class="op">=</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>                            remaining<span class="op">.</span>split_off(remaining<span class="op">.</span>len() <span class="op">/</span> <span class="dv">2</span>)<span class="op">;</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>                        Overlay(remaining<span class="op">,</span> ending_half)</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>                    <span class="op">}</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>                <span class="op">}</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>            <span class="op">}</span>)<span class="op">,</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>    <span class="op">...</span></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>This function isn’t terribly interesting on its own, it doesn’t add any edges to the graph and is not
+suited for adding vertices to an already-existing graph, but it is one of the primitive builders provided
+by <code>alga</code>. We can see that this anamorphism splits the list of vertices in half and overlays them.</p>
+<p>We can do something very similar in order to construct a clique (which <code>alga</code> also defines), simply
+by using <code>Connect</code> instead of <code>Overlay</code>:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>    <span class="co">/// Constructs fully connected graph</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> <span class="kw">fn</span> clique(vs<span class="op">:</span> <span class="dt">Vec</span><span class="op">&lt;</span>V<span class="op">&gt;</span>) <span class="op">-&gt;</span> Graph<span class="op">&lt;</span>V<span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>        Graph <span class="op">{</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>            inner<span class="op">:</span> <span class="pp">RecursiveGraph::</span>expand_layers(vs<span class="op">,</span> <span class="op">|</span><span class="kw">mut</span> remaining<span class="op">|</span> <span class="op">{</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>                <span class="kw">use</span> <span class="pp">RGraph::</span><span class="op">*;</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>                <span class="cf">match</span> remaining<span class="op">.</span>len() <span class="op">{</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>                    <span class="dv">0</span> <span class="op">=&gt;</span> Empty<span class="op">,</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>                    <span class="dv">1</span> <span class="op">=&gt;</span> Vertex(remaining<span class="op">.</span>pop()<span class="op">.</span>unwrap())<span class="op">,</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>                    _ <span class="op">=&gt;</span> <span class="op">{</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>                        <span class="kw">let</span> ending_half <span class="op">=</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>                            remaining<span class="op">.</span>split_off(remaining<span class="op">.</span>len() <span class="op">/</span> <span class="dv">2</span>)<span class="op">;</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>                        Connect(remaining<span class="op">,</span> ending_half)</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>                    <span class="op">}</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>                <span class="op">}</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>            <span class="op">}</span>)<span class="op">,</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span></code></pre></div>
+<h2 id="destructors">Destructors</h2>
+<p>To ensure that <code>vertices</code> does the thing it’s supposed to, we can add a method to count the number of vertices in the graph,
+also known as the graph’s order:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>    <span class="co">/// Gets the number of vertices in the graph</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> <span class="kw">fn</span> order(<span class="kw">self</span>) <span class="op">-&gt;</span> <span class="dt">usize</span> <span class="op">{</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>        <span class="kw">use</span> <span class="pp">RGraph::</span><span class="op">*;</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>        <span class="kw">self</span><span class="op">.</span>inner<span class="op">.</span>collapse_layers(<span class="op">|</span>layer<span class="op">:</span> RGraph<span class="op">&lt;</span>V<span class="op">,</span> HashSet<span class="op">&lt;</span>V<span class="op">&gt;&gt;|</span> <span class="cf">match</span> layer <span class="op">{</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>            Empty <span class="op">=&gt;</span> <span class="pp">HashSet::</span>new()<span class="op">,</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>            Vertex(v) <span class="op">=&gt;</span> <span class="pp">HashSet::</span>from_iter([v])<span class="op">,</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>            Overlay(a<span class="op">,</span> b) <span class="op">=&gt;</span> set_union(a<span class="op">,</span> b)<span class="op">,</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>            Connect(a<span class="op">,</span> b) <span class="op">=&gt;</span> set_union(a<span class="op">,</span> b)</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span>)<span class="op">.</span>len()</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span></code></pre></div>
+<p>Here we fold the graph layer by layer, unioning the sets of vertices together and getting
+the cardinality of the set at the end.</p>
+<p>As you may have guessed, there isn’t really anything in the representation above preventing one from
+adding vertices and edges when they are already present. In fact, <code>alga</code> has a function to
+<a href="https://hackage.haskell.org/package/algebraic-graphs-0.7/docs/Algebra-Graph.html#v:simplify"><code>simplify</code></a>
+a representation by pruning redundancies. I’m unsure how often this
+is needed in practice, but efficiency is not the focus of this blog post in any case.</p>
+<p>Speaking of efficiency… <code>alga</code> conducts some of its queries on <a href="https://hackage.haskell.org/package/algebraic-graphs-0.7/docs/src/Algebra.Graph.html#edgeCount">temporary
+structures</a>
+that are more performant, such as adjacency maps. Replicated below:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> AdjacencyMap<span class="op">&lt;</span>V<span class="op">&gt;</span> <span class="op">=</span> HashMap<span class="op">&lt;</span>V<span class="op">,</span> HashSet<span class="op">&lt;</span>V<span class="op">&gt;&gt;;</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="kw">impl</span><span class="op">&lt;</span>V<span class="op">:</span> <span class="bu">Hash</span> <span class="op">+</span> <span class="bu">Eq</span> <span class="op">+</span> <span class="bu">Clone</span> <span class="op">+</span> <span class="bu">Debug</span><span class="op">&gt;</span> Graph<span class="op">&lt;</span>V<span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="op">...</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    <span class="co">/// Folds a [`Graph`] to construct an adjacency map</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> <span class="kw">fn</span> to_adjacency_map(<span class="kw">self</span>) <span class="op">-&gt;</span> AdjacencyMap<span class="op">&lt;</span>V<span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>        <span class="kw">use</span> <span class="pp">RGraph::</span><span class="op">*;</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>        <span class="kw">self</span><span class="op">.</span>inner</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span>collapse_layers(<span class="op">|</span>layer<span class="op">:</span> RGraph<span class="op">&lt;</span>V<span class="op">,</span> AdjacencyMap<span class="op">&lt;</span>V<span class="op">&gt;&gt;|</span> <span class="cf">match</span> layer <span class="op">{</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>                Empty <span class="op">=&gt;</span> <span class="pp">HashMap::</span>new()<span class="op">,</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>                Vertex(v) <span class="op">=&gt;</span> <span class="op">{</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>                    <span class="kw">let</span> <span class="kw">mut</span> map <span class="op">=</span> <span class="pp">HashMap::</span>new()<span class="op">;</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>                    map<span class="op">.</span>insert(v<span class="op">,</span> <span class="pp">HashSet::</span>new())<span class="op">;</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>                    map</span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>                <span class="op">}</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>                Overlay(a<span class="op">,</span> b) <span class="op">=&gt;</span> union_with(<span class="op">&amp;</span>a<span class="op">,</span> <span class="op">&amp;</span>b<span class="op">,</span> set_union)<span class="op">,</span></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>                Connect(a<span class="op">,</span> b) <span class="op">=&gt;</span> unions_with(</span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>                    <span class="pp">vec!</span>[</span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>                        <span class="op">&amp;</span>a<span class="op">,</span></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>                        <span class="op">&amp;</span>b<span class="op">,</span></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>                        <span class="op">&amp;</span>from_iter_with(<span class="pp">HashSet::</span><span class="op">&lt;</span>V<span class="op">&gt;</span><span class="pp">::</span>from_iter(a<span class="op">.</span>keys()<span class="op">.</span>cloned())<span class="op">,</span> </span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>                            <span class="op">|</span>_<span class="op">|</span> <span class="op">{</span></span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>                                <span class="co">// every `a` node gets `bs` as neighbors</span></span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>                                <span class="pp">HashSet::</span>from_iter(b<span class="op">.</span>keys()<span class="op">.</span>cloned())</span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a>                            <span class="op">}</span>)<span class="op">,</span></span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a>                    ]<span class="op">,</span></span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a>                    set_union<span class="op">,</span></span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a>                )<span class="op">,</span></span>
+<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a>            <span class="op">}</span>)</span>
+<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a>    <span class="op">...</span></span>
+<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>In the case of an <code>Overlay</code> we combine adjacency lists by unioning the neighbors of identical nodes.
+In the case of a <code>Connect</code>, the same combination is also unioned with a neighbor set representing a
+fully connected subgraph of all nodes in <code>a</code> and <code>b</code>.</p>
+<p>With this representation available, we can easily query the number of edges in the graph:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>    <span class="co">/// Calculates the number of edges in the graph</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> <span class="kw">fn</span> size(<span class="kw">self</span>) <span class="op">-&gt;</span> <span class="dt">usize</span> <span class="op">{</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>        <span class="kw">self</span><span class="op">.</span>to_adjacency_map()<span class="op">.</span>values()<span class="op">.</span>map(<span class="pp">HashSet::</span>len)<span class="op">.</span>sum()</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span></code></pre></div>
+<h2 id="testing-the-implementation">Testing the implementation</h2>
+<p>Finally, to test what we’ve got:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>cfg<span class="at">(</span>test<span class="at">)]</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="kw">mod</span> tests <span class="op">{</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">use</span> <span class="kw">crate</span><span class="pp">::</span><span class="op">*;</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">#[</span>test<span class="at">]</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">fn</span> test_graph() <span class="op">{</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>        <span class="kw">let</span> vs <span class="op">=</span> <span class="pp">vec!</span>[<span class="dv">1</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">3</span><span class="op">,</span> <span class="dv">4</span><span class="op">,</span> <span class="dv">5</span><span class="op">,</span> <span class="dv">6</span><span class="op">,</span> <span class="dv">7</span><span class="op">,</span> <span class="dv">8</span><span class="op">,</span> <span class="dv">9</span>]<span class="op">;</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>        <span class="co">// fully connected graphs have (n)(n-1)/2 edges</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>        <span class="pp">assert_eq!</span>(<span class="pp">Graph::</span>clique(vs<span class="op">.</span>clone())<span class="op">.</span>size()<span class="op">,</span> (<span class="dv">9</span> <span class="op">*</span> <span class="dv">8</span> <span class="op">/</span> <span class="dv">2</span>))<span class="op">;</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>        <span class="pp">assert_eq!</span>(<span class="pp">Graph::</span>vertices(vs<span class="op">.</span>clone())<span class="op">.</span>size()<span class="op">,</span> <span class="dv">0</span>)<span class="op">;</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>        <span class="pp">assert_eq!</span>(<span class="pp">Graph::</span>vertices(vs<span class="op">.</span>clone())<span class="op">.</span>order()<span class="op">,</span> <span class="dv">9</span>)<span class="op">;</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>That’s a decent start. Credit to Inanna Malick for making the <code>recursion</code> crate: it was fun
+to play with!</p>
+<h2 id="update-working-with-references-courtesy-of-inanna-malick">Update: working with references (courtesy of Inanna Malick)</h2>
+<p>It would be nice if we could run multiple passes over the graph, and not have to consume it
+just to do something like count its nodes. To enable this, a few tweaks have to be made. First, we introduce
+a recursive definition of <code>RGraph</code> over borrowed data:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">pub</span> <span class="kw">enum</span> RGraphRef<span class="op">&lt;</span><span class="ot">'a</span><span class="op">,</span> Val<span class="op">,</span> A<span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    Empty<span class="op">,</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    Vertex(<span class="op">&amp;</span><span class="ot">'a</span> Val)<span class="op">,</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    Overlay(A<span class="op">,</span> A)<span class="op">,</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    Connect(A<span class="op">,</span> A)<span class="op">,</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>This definition allows us to create an implementation of <code>MapLayer</code> that takes a recursive
+type that owns data (<code>RGraph</code>), and map it to one that refers to that data (<code>RGraphRef</code>):</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">impl</span><span class="op">&lt;</span><span class="ot">'a</span><span class="op">,</span> A<span class="op">:</span> <span class="bu">Copy</span> <span class="op">+</span> <span class="ot">'a</span><span class="op">,</span> B<span class="op">:</span> <span class="ot">'a</span><span class="op">,</span> V<span class="op">:</span> <span class="ot">'a</span><span class="op">&gt;</span> MapLayer<span class="op">&lt;</span>B<span class="op">&gt;</span> <span class="cf">for</span> <span class="op">&amp;</span><span class="ot">'a</span> RGraph<span class="op">&lt;</span>V<span class="op">,</span> A<span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">type</span> To <span class="op">=</span> RGraphRef<span class="op">&lt;</span><span class="ot">'a</span><span class="op">,</span> V<span class="op">,</span> B<span class="op">&gt;;</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">type</span> Unwrapped <span class="op">=</span> A<span class="op">;</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">fn</span> map_layer<span class="op">&lt;</span>F<span class="op">:</span> <span class="bu">FnMut</span>(<span class="dt">Self</span><span class="pp">::</span>Unwrapped) <span class="op">-&gt;</span> B<span class="op">&gt;</span>(<span class="kw">self</span><span class="op">,</span> <span class="kw">mut</span> f<span class="op">:</span> F) <span class="op">-&gt;</span> <span class="dt">Self</span><span class="pp">::</span>To <span class="op">{</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>        <span class="cf">match</span> <span class="kw">self</span> <span class="op">{</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>            <span class="pp">RGraph::</span>Empty <span class="op">=&gt;</span> <span class="pp">RGraphRef::</span>Empty<span class="op">,</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>            <span class="pp">RGraph::</span>Vertex(v) <span class="op">=&gt;</span> <span class="pp">RGraphRef::</span>Vertex(v)<span class="op">,</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>            <span class="pp">RGraph::</span>Overlay(a<span class="op">,</span> b) <span class="op">=&gt;</span> <span class="pp">RGraphRef::</span>Overlay(f(<span class="op">*</span>a)<span class="op">,</span> f(<span class="op">*</span>b))<span class="op">,</span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>            <span class="pp">RGraph::</span>Connect(a<span class="op">,</span> b) <span class="op">=&gt;</span> <span class="pp">RGraphRef::</span>Connect(f(<span class="op">*</span>a)<span class="op">,</span> f(<span class="op">*</span>b))<span class="op">,</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Now, when applying our algebra to tear down this recursive structure, it can be in
+terms of the referenced data. For example, let’s see how our definition of <code>order</code>
+would change:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode diff"><code class="sourceCode diff"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="st">-    pub fn order(self) -&gt; usize {</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="va">+    pub fn order(&amp;self) -&gt; usize {</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>         let unique =</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="st">-            self.inner.collapse_layers(|layer: RGraph&lt;V, HashSet&lt;V&gt;&gt;| {</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="va">+            self.inner.as_ref().collapse_layers(|layer: RGraphRef&lt;V, HashSet&lt;&amp;V&gt;&gt;| {</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="st">-                use RGraph::*;</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a><span class="va">+                use RGraphRef::*;</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>                 match layer {</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>                     Empty =&gt; HashSet::new(),</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>                     Vertex(v) =&gt; HashSet::from_iter(vec![v]),</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>                     Overlay(a, b) =&gt; set_union(a, b),</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>                     Connect(a, b) =&gt; set_union(a, b),</span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>                 }</span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>             });</span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>         unique.len()</span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>     }</span></code></pre></div>
+<p>And there you have it!</p>
+<h2 id="appendix">Appendix</h2>
+<p>Below are the definitions of referenced helper functions:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">fn</span> set_union<span class="op">&lt;</span>V<span class="op">:</span> <span class="bu">Eq</span> <span class="op">+</span> <span class="bu">Hash</span> <span class="op">+</span> <span class="bu">Clone</span><span class="op">&gt;</span>(u<span class="op">:</span> HashSet<span class="op">&lt;</span>V<span class="op">&gt;,</span> v<span class="op">:</span> HashSet<span class="op">&lt;</span>V<span class="op">&gt;</span>) <span class="op">-&gt;</span> HashSet<span class="op">&lt;</span>V<span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    u<span class="op">.</span><span class="kw">union</span>(<span class="op">&amp;</span>v)<span class="op">.</span>cloned()<span class="op">.</span>collect()</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="co">/// Constructs a HashMap, determines a key's values by applying</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="co">/// a given function to each respective key</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a><span class="kw">fn</span> from_iter_with<span class="op">&lt;</span>K<span class="op">:</span> <span class="bu">Eq</span> <span class="op">+</span> <span class="bu">Hash</span><span class="op">,</span> V<span class="op">,</span> F<span class="op">&gt;</span>(</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>    it<span class="op">:</span> <span class="kw">impl</span> <span class="bu">IntoIterator</span><span class="op">&lt;</span>Item <span class="op">=</span> K<span class="op">&gt;,</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>    f<span class="op">:</span> F<span class="op">,</span></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>) <span class="op">-&gt;</span> HashMap<span class="op">&lt;</span>K<span class="op">,</span> V<span class="op">&gt;</span></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a><span class="kw">where</span></span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>    F<span class="op">:</span> <span class="bu">Fn</span>(<span class="op">&amp;</span>K) <span class="op">-&gt;</span> V<span class="op">,</span></span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>    it<span class="op">.</span>into_iter()<span class="op">.</span>fold(<span class="pp">HashMap::</span>new()<span class="op">,</span> <span class="op">|</span><span class="kw">mut</span> acc<span class="op">,</span> k<span class="op">|</span> <span class="op">{</span></span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>        <span class="kw">let</span> v <span class="op">=</span> f(<span class="op">&amp;</span>k)<span class="op">;</span></span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>        acc<span class="op">.</span>insert(k<span class="op">,</span> v)<span class="op">;</span></span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>        acc</span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span>)</span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a><span class="co">/// Unions two HashMaps by applying a given function to</span></span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a><span class="co">/// the values of common keys</span></span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a><span class="kw">fn</span> union_with<span class="op">&lt;</span><span class="ot">'a</span><span class="op">,</span> K<span class="op">:</span> <span class="ot">'a</span> <span class="op">+</span> <span class="bu">Eq</span> <span class="op">+</span> <span class="bu">Hash</span> <span class="op">+</span> <span class="bu">Clone</span><span class="op">,</span> V<span class="op">:</span> <span class="ot">'a</span> <span class="op">+</span> <span class="bu">Clone</span><span class="op">,</span> F<span class="op">&gt;</span>(</span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a>    a<span class="op">:</span> <span class="op">&amp;</span><span class="ot">'a</span> HashMap<span class="op">&lt;</span>K<span class="op">,</span> V<span class="op">&gt;,</span></span>
+<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a>    b<span class="op">:</span> <span class="op">&amp;</span><span class="ot">'a</span> HashMap<span class="op">&lt;</span>K<span class="op">,</span> V<span class="op">&gt;,</span></span>
+<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a>    f<span class="op">:</span> F<span class="op">,</span></span>
+<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a>) <span class="op">-&gt;</span> HashMap<span class="op">&lt;</span>K<span class="op">,</span> V<span class="op">&gt;</span></span>
+<span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a><span class="kw">where</span></span>
+<span id="cb12-29"><a href="#cb12-29" aria-hidden="true" tabindex="-1"></a>    F<span class="op">:</span> <span class="bu">Fn</span>(V<span class="op">,</span> V) <span class="op">-&gt;</span> V<span class="op">,</span></span>
+<span id="cb12-30"><a href="#cb12-30" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb12-31"><a href="#cb12-31" aria-hidden="true" tabindex="-1"></a>    unions_with([a<span class="op">,</span> b]<span class="op">,</span> f)</span>
+<span id="cb12-32"><a href="#cb12-32" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb12-33"><a href="#cb12-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-34"><a href="#cb12-34" aria-hidden="true" tabindex="-1"></a><span class="co">/// Unions multiple HashMaps by applying a given function to</span></span>
+<span id="cb12-35"><a href="#cb12-35" aria-hidden="true" tabindex="-1"></a><span class="co">/// the values of common keys</span></span>
+<span id="cb12-36"><a href="#cb12-36" aria-hidden="true" tabindex="-1"></a><span class="kw">fn</span> unions_with<span class="op">&lt;</span><span class="ot">'a</span><span class="op">,</span> K<span class="op">:</span> <span class="ot">'a</span> <span class="op">+</span> <span class="bu">Eq</span> <span class="op">+</span> <span class="bu">Hash</span> <span class="op">+</span> <span class="bu">Clone</span><span class="op">,</span> V<span class="op">:</span> <span class="ot">'a</span> <span class="op">+</span> <span class="bu">Clone</span><span class="op">,</span> F<span class="op">&gt;</span>(</span>
+<span id="cb12-37"><a href="#cb12-37" aria-hidden="true" tabindex="-1"></a>    maps<span class="op">:</span> <span class="kw">impl</span> <span class="bu">IntoIterator</span><span class="op">&lt;</span>Item <span class="op">=</span> <span class="op">&amp;</span><span class="ot">'a</span> HashMap<span class="op">&lt;</span>K<span class="op">,</span> V<span class="op">&gt;&gt;,</span></span>
+<span id="cb12-38"><a href="#cb12-38" aria-hidden="true" tabindex="-1"></a>    f<span class="op">:</span> F<span class="op">,</span></span>
+<span id="cb12-39"><a href="#cb12-39" aria-hidden="true" tabindex="-1"></a>) <span class="op">-&gt;</span> HashMap<span class="op">&lt;</span>K<span class="op">,</span> V<span class="op">&gt;</span></span>
+<span id="cb12-40"><a href="#cb12-40" aria-hidden="true" tabindex="-1"></a><span class="kw">where</span></span>
+<span id="cb12-41"><a href="#cb12-41" aria-hidden="true" tabindex="-1"></a>    F<span class="op">:</span> <span class="bu">Fn</span>(V<span class="op">,</span> V) <span class="op">-&gt;</span> V<span class="op">,</span></span>
+<span id="cb12-42"><a href="#cb12-42" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb12-43"><a href="#cb12-43" aria-hidden="true" tabindex="-1"></a>    maps<span class="op">.</span>into_iter()<span class="op">.</span>fold(<span class="pp">HashMap::</span>new()<span class="op">,</span> <span class="op">|</span><span class="kw">mut</span> acc<span class="op">,</span> map<span class="op">|</span> <span class="op">{</span></span>
+<span id="cb12-44"><a href="#cb12-44" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> (k<span class="op">,</span> v) <span class="kw">in</span> map<span class="op">.</span>iter() <span class="op">{</span></span>
+<span id="cb12-45"><a href="#cb12-45" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="kw">let</span> <span class="cn">Some</span>(u) <span class="op">=</span> acc<span class="op">.</span>remove(<span class="op">&amp;</span>k) <span class="op">{</span></span>
+<span id="cb12-46"><a href="#cb12-46" aria-hidden="true" tabindex="-1"></a>                acc<span class="op">.</span>insert(k<span class="op">.</span>clone()<span class="op">,</span> f(u<span class="op">,</span> v<span class="op">.</span>clone()))<span class="op">;</span></span>
+<span id="cb12-47"><a href="#cb12-47" aria-hidden="true" tabindex="-1"></a>            <span class="op">}</span> <span class="cf">else</span> <span class="op">{</span></span>
+<span id="cb12-48"><a href="#cb12-48" aria-hidden="true" tabindex="-1"></a>                acc<span class="op">.</span>insert(k<span class="op">.</span>clone()<span class="op">,</span> v<span class="op">.</span>clone())<span class="op">;</span></span>
+<span id="cb12-49"><a href="#cb12-49" aria-hidden="true" tabindex="-1"></a>            <span class="op">}</span></span>
+<span id="cb12-50"><a href="#cb12-50" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb12-51"><a href="#cb12-51" aria-hidden="true" tabindex="-1"></a>        acc</span>
+<span id="cb12-52"><a href="#cb12-52" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span>)</span>
+<span id="cb12-53"><a href="#cb12-53" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+    </section>
+</article>
+
+    </main>
+    <div id="footer">
+        <small><a href="../rss.xml">RSS</a></small>
+        <small><a href="../atom.xml">Atom</a></small>
+        <small>&copy; Copyright 2026, David Anekstein</small>
+    </div>
+
+    <script>
+        const menuToggle = document.getElementById('menu-toggle');
+        const navigation = document.getElementById('navigation');
+        
+        menuToggle.addEventListener('click', function() {
+            navigation.classList.toggle('open');
+            menuToggle.classList.toggle('open');
+        });
+    </script>
+</body>
+
+</html>

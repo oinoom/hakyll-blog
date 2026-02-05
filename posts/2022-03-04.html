@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>To Be Determined - Discovering I've Shot Myself in the Foot with std::async
+</title>
+    <link rel="stylesheet" href="../css/default.css" />
+    <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="alternate" type="application/rss+xml" title="David Anekstein's blog - To Be Determined" href="./rss.xml">
+    <link rel="alternate" type="application/atom+xml" title="David Anekstein's blog - To Be Determined" href="./atom.xml">
+</head>
+
+<body>
+    <div id="header">
+        <div id="logo">
+            <a href="../">To Be Determined</a>
+        </div>
+        <button id="menu-toggle" aria-label="Toggle navigation">☰</button>
+        <div id="navigation">
+            <a href="../posts.html">Posts</a>
+            <a href="../projects.html">Projects</a>
+            <a href="../publications.html">Publications</a>
+            <a href="../about.html">About</a>
+        </div>
+    </div>
+
+    <main role="main">
+        <article>
+    <section class="header">
+        <h1>Discovering I've Shot Myself in the Foot with std::async
+</h1>
+        <div class="info">
+            Posted on March  4, 2022
+            
+        </div>
+    </section>
+    <section>
+        <p>I was recently looking into implementing some
+speculative execution functionality using <code>std::async</code>; based on some seed data,
+the goal was to asynchronously run a compute-intensive calculation
+where the result may or may not be needed at a later time. When new seed
+data became available, it was an indication that any
+in-progress computation should be terminated early and that
+its result be considered defunct.</p>
+<p>Below I’m going to outline a contrived example that
+demonstrates the sort of trouble I ended up running into.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">enum</span> <span class="kw">class</span> CalculationProgress <span class="op">{</span> Unaborted<span class="op">,</span> Aborted <span class="op">};</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>optional<span class="op">&lt;</span><span class="dt">int</span><span class="op">&gt;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>calculate<span class="op">(</span><span class="bu">std::</span>string name<span class="op">,</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>          <span class="bu">std::</span>shared_ptr<span class="op">&lt;</span><span class="bu">std::</span>atomic<span class="op">&lt;</span>CalculationProgress<span class="op">&gt;&gt;</span> abort_status<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">const</span> <span class="kw">auto</span> arbitrary_computation_time <span class="op">=</span> <span class="bu">std::</span>chrono::seconds<span class="op">(</span><span class="dv">10</span><span class="op">);</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">const</span> <span class="kw">auto</span> arbitrary_loop_time <span class="op">=</span> <span class="bu">std::</span>chrono::seconds<span class="op">(</span><span class="dv">5</span><span class="op">);</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">const</span> <span class="kw">auto</span> arbitrary_max_loops <span class="op">=</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>      arbitrary_computation_time <span class="op">/</span> arbitrary_loop_time<span class="op">;</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>  <span class="kw">auto</span> count <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>  <span class="dt">bool</span> was_aborted <span class="op">=</span> <span class="kw">false</span><span class="op">;</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>  <span class="cf">do</span> <span class="op">{</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>this_thread::sleep_for<span class="op">(</span>arbitrary_loop_time<span class="op">);</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    count<span class="op">++;</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    was_aborted <span class="op">=</span> <span class="op">*</span>abort_status <span class="op">==</span> CalculationProgress<span class="op">::</span>Aborted<span class="op">;</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span> <span class="cf">while</span> <span class="op">(</span>count <span class="op">&lt;</span> arbitrary_max_loops <span class="op">&amp;&amp;</span> <span class="op">!</span>was_aborted<span class="op">);</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">const</span> <span class="kw">auto</span> status <span class="op">=</span> was_aborted <span class="op">?</span> <span class="st">&quot;ABORTED&quot;</span> <span class="op">:</span> <span class="st">&quot;COMPLETE&quot;</span><span class="op">;</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>  <span class="bu">std::</span>cout <span class="op">&lt;&lt;</span> name <span class="op">&lt;&lt;</span> <span class="st">&quot;: &quot;</span> <span class="op">&lt;&lt;</span> status <span class="op">&lt;&lt;</span> <span class="st">&quot;, count: &quot;</span> <span class="op">&lt;&lt;</span> count <span class="op">&lt;&lt;</span> <span class="bu">std::</span>endl<span class="op">;</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> was_aborted <span class="op">?</span> <span class="bu">std::</span>nullopt <span class="op">:</span> <span class="bu">std::</span>optional<span class="op">(</span>count<span class="op">);</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>The function <code>calculate</code> above is the contrived, compute-intensive calculation. It periodically checks the condition while performing its calculation (in this case every five seconds). Depending on its value,
+it either finishes its long-running calculation or gets aborted – whichever occurs first. From <code>arbitrary_loop_time</code>
+in the do-while loop, it’s clear that <code>calculate</code> will have a best-case execution time of five seconds.</p>
+<p>The entity making async calls to <code>calculate</code> is a class called <code>Calculator</code>, and it
+tracks the results of <code>calculate</code> in one of its member attributes.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Calculator <span class="op">{</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="bu">std::</span>future<span class="op">&lt;</span><span class="bu">std::</span>optional<span class="op">&lt;</span><span class="dt">int</span><span class="op">&gt;&gt;</span> future_value<span class="op">{};</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">void</span> launch_async_calc<span class="op">(</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>      <span class="bu">std::</span>string name<span class="op">,</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>      <span class="bu">std::</span>shared_ptr<span class="op">&lt;</span><span class="bu">std::</span>atomic<span class="op">&lt;</span>CalculationProgress<span class="op">&gt;&gt;</span> abort_status<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    future_value <span class="op">=</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>        <span class="bu">std::</span>async<span class="op">(</span><span class="bu">std::</span>launch::async<span class="op">,</span> <span class="op">[=]()</span> <span class="op">{</span> <span class="cf">return</span> calculate<span class="op">(</span>name<span class="op">,</span> abort_status<span class="op">);</span> <span class="op">});</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>With these in place, async computations can be launched and aborted:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> main<span class="op">()</span> <span class="op">{</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  Calculator calculator<span class="op">{};</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">auto</span> cv1 <span class="op">=</span> <span class="bu">std::</span>make_shared<span class="op">&lt;</span><span class="bu">std::</span>atomic<span class="op">&lt;</span>CalculationProgress<span class="op">&gt;&gt;(</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>      CalculationProgress<span class="op">::</span>Unaborted<span class="op">);</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>  calculator<span class="op">.</span>launch_async_calc<span class="op">(</span><span class="st">&quot;foo&quot;</span><span class="op">,</span> cv1<span class="op">);</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>  <span class="kw">auto</span> cv2 <span class="op">=</span> <span class="bu">std::</span>make_shared<span class="op">&lt;</span><span class="bu">std::</span>atomic<span class="op">&lt;</span>CalculationProgress<span class="op">&gt;&gt;(</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>      CalculationProgress<span class="op">::</span>Unaborted<span class="op">);</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>  calculator<span class="op">.</span>launch_async_calc<span class="op">(</span><span class="st">&quot;bar&quot;</span><span class="op">,</span> cv2<span class="op">);</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>  <span class="op">*</span>cv1 <span class="op">=</span> CalculationProgress<span class="op">::</span>Aborted<span class="op">;</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>  <span class="op">*</span>cv2 <span class="op">=</span> CalculationProgress<span class="op">::</span>Aborted<span class="op">;</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>When running this program, we get the following output:</p>
+<pre><code>$ time ./calculate_foo
+foo: COMPLETE, count: 2
+bar: ABORTED, count: 2
+./calculate_foo  0.00s user 0.00s system 0% cpu 10.002 total</code></pre>
+<p>Something is off – wasn’t <code>foo</code> supposed to be aborted? And the program runs for about
+ten seconds. I’d expect both <code>launch_async_calc</code> calls to run in parallel on
+my machine; <code>foo</code> would recognize its toggled abort after one loop
+of five seconds, <code>bar</code> would would do the same, and the program time
+should then be five seconds or so. What happened?</p>
+<p>Using some good, old-fashioned print debugging, let’s check to see if
+these processes are launched concurrently by adding the following
+to the top of <code>calculate</code>:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>optional<span class="op">&lt;</span><span class="dt">int</span><span class="op">&gt;</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>calculate<span class="op">(</span><span class="bu">std::</span>string name<span class="op">,</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>          <span class="bu">std::</span>shared_ptr<span class="op">&lt;</span><span class="bu">std::</span>atomic<span class="op">&lt;</span>CalculationProgress<span class="op">&gt;&gt;</span> abort_status<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="bu">std::</span>cout <span class="op">&lt;&lt;</span> name <span class="op">&lt;&lt;</span> <span class="st">&quot;: LAUNCHED&quot;</span> <span class="op">&lt;&lt;</span> <span class="bu">std::</span>endl<span class="op">;</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="op">...</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Now the program outputs:</p>
+<pre><code>$ time ./calculate_foo
+foo: LAUNCHED
+bar: LAUNCHED
+foo: COMPLETE, count: 2
+bar: ABORTED, count: 2
+./calculate_foo  0.00s user 0.00s system 0% cpu 10.002 total</code></pre>
+<p>So it does look like they’re getting launched concurrently. From the
+ten-second run time and loop count, it would appear that <code>foo</code> wasn’t appropriately
+aborted as we would suspect. Adding one more log line to <code>main</code>:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> main<span class="op">()</span> <span class="op">{</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="op">...</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="bu">std::</span>cout <span class="op">&lt;&lt;</span> <span class="st">&quot;ABORTING&quot;</span> <span class="op">&lt;&lt;</span> <span class="bu">std::</span>endl<span class="op">;</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  <span class="op">*</span>cv1 <span class="op">=</span> CalculationProgress<span class="op">::</span>Aborted<span class="op">;</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  <span class="op">...</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>we see:</p>
+<pre><code>$ time ./calculate_foo
+foo: LAUNCHED
+bar: LAUNCHED
+foo: COMPLETE, count: 2
+ABORTING
+bar: ABORTED, count: 2
+./calculate_foo  0.00s user 0.00s system 0% cpu 10.002 total</code></pre>
+<p>Okay, so <code>foo</code> has completely finished its calculation before it’s
+been properly aborted, despite the fact each calculation is launched
+concurrently. It would appear something is blocking on the calculation
+for <code>foo</code>.</p>
+<p>After a few more careful placements, the culprit is narrowed
+down to the only line in <code>calculator.launch_async_calc("bar", cv2)</code>:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>future_value <span class="op">=</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>async<span class="op">(</span><span class="bu">std::</span>launch::async<span class="op">,</span> <span class="op">[=]()</span> <span class="op">{</span> <span class="cf">return</span> calculate<span class="op">(</span>name<span class="op">,</span> abort_status<span class="op">);</span> <span class="op">});</span></span></code></pre></div>
+<p>After measuring the time it takes to execute this line, the program
+shows that it takes a whole nine seconds to reassign
+the <code>std::future</code> returned by the <code>std::async</code> call.</p>
+<pre><code>$ time ./calculate_foo
+foo: assigned in 0 seconds
+foo: LAUNCHED
+bar: LAUNCHED
+bar: ABORTED, count: 0
+foo: COMPLETE, count: 2
+bar: assigned in 9 seconds
+ABORTING
+./calculate_foo  0.00s user 0.00s system 0% cpu 10.002 total</code></pre>
+<p>When dealing with this problem originally, outside of this contrived example, I started
+completely puzzled. After narrowing down to two possibilities, the <code>std::future</code> move assignment
+operator or its destructor, I decided to search online and found a page that resulted in palm-to-face contact…</p>
+<p><a href="https://stackoverflow.com/q/23455104">Why is the destructor of a future returned from <code>std::async</code> blocking?</a></p>
+<p>After the initial surprise wore off, and after reading through a portion of the treasure-trove of
+information linked by the top answer, I decided to see if the
+<a href="https://en.cppreference.com/w/cpp/thread/async">official documentation</a> for <code>std::future</code>
+had anything to say about this. More or less, about halfway down the page, it does:</p>
+<blockquote>
+<p><em>If the std::future obtained from std::async is not moved from or bound to a reference, the destructor of the std::future will block at the end of the full expression until the asynchronous operation completes, essentially making code such as the following synchronous:</em></p>
+</blockquote>
+<div class="sourceCode" id="cb11"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>async<span class="op">(</span><span class="bu">std::</span>launch::async<span class="op">,</span> <span class="op">[]{</span> f<span class="op">();</span> <span class="op">});</span> <span class="co">// temporary's dtor waits for f()</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>async<span class="op">(</span><span class="bu">std::</span>launch::async<span class="op">,</span> <span class="op">[]{</span> g<span class="op">();</span> <span class="op">});</span> <span class="co">// does not start until f() completes</span></span></code></pre></div>
+<blockquote>
+<p><em>(note that the destructors of std::futures obtained by means other than a call to std::async never block)</em></p>
+</blockquote>
+<p>I’m not completely satisfied with lack of emphasis on the reference page, but it at least alludes to one possible way of making the above program work as intended. All it takes
+is a few lines. We maintain a vector of past calculations and move the future that’s about to get reassigned
+into the vector before doing so:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Calculator <span class="op">{</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="bu">std::</span>future<span class="op">&lt;</span><span class="bu">std::</span>optional<span class="op">&lt;</span><span class="dt">int</span><span class="op">&gt;&gt;</span> future_value<span class="op">{};</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="bu">std::</span>vector<span class="op">&lt;</span><span class="bu">std::</span>future<span class="op">&lt;</span><span class="bu">std::</span>optional<span class="op">&lt;</span><span class="dt">int</span><span class="op">&gt;&gt;&gt;</span> old_futures<span class="op">{};</span> <span class="co">// new</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">void</span> launch_async_calc<span class="op">(</span><span class="bu">std::</span>string name<span class="op">,</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>                         <span class="bu">std::</span>shared_ptr<span class="op">&lt;</span><span class="bu">std::</span>atomic<span class="op">&lt;</span>CalculationProgress<span class="op">&gt;&gt;</span> abort_status<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>    old_futures<span class="op">.</span>push_back<span class="op">(</span><span class="bu">std::</span>move<span class="op">(</span>future_value<span class="op">));</span> <span class="co">// new</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>    future_value <span class="op">=</span></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>        <span class="bu">std::</span>async<span class="op">(</span><span class="bu">std::</span>launch::async<span class="op">,</span> <span class="op">[=]()</span> <span class="op">{</span> <span class="cf">return</span> calculate<span class="op">(</span>name<span class="op">,</span> abort_status<span class="op">);</span> <span class="op">});</span></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>This solution has its problems. For example, now there arguably
+should be something that prunes <code>old_futures</code>, once they complete,
+in order to avoid a vector that perpetually grows. The program now outputs:</p>
+<pre><code>$ time ./calculate_foo
+foo: assigned in 0 seconds
+foo: LAUNCHED
+bar: assigned in 0 seconds
+bar: LAUNCHED
+ABORTING
+foo: ABORTED, count: 1
+bar: ABORTED, count: 1
+./calculate_foo  0.00s user 0.00s system 0% cpu 5.002 total</code></pre>
+<p>The total run time of the program is still limited to the minumum run time of calculating
+<code>foo</code>, because each element in <code>old_futures</code> still has a blocking destructor, but at least
+subsequent calls to <code>launch_async_calc</code> will not be blocking on prior calls and
+the program now behaves as we would expect.</p>
+<p>I’m on the fence about considering this a true foot-gun or not. But
+something that does make it seem like one, at least to me, is the
+fact that <code>std::futures</code> returned by <code>std::promise</code>, for example,
+do not exhibit this blocking behavior. Either way, having been made aware of
+this, I’ll be keeping it in mind.</p>
+    </section>
+</article>
+
+    </main>
+    <div id="footer">
+        <small><a href="../rss.xml">RSS</a></small>
+        <small><a href="../atom.xml">Atom</a></small>
+        <small>&copy; Copyright 2026, David Anekstein</small>
+    </div>
+
+    <script>
+        const menuToggle = document.getElementById('menu-toggle');
+        const navigation = document.getElementById('navigation');
+        
+        menuToggle.addEventListener('click', function() {
+            navigation.classList.toggle('open');
+            menuToggle.classList.toggle('open');
+        });
+    </script>
+</body>
+
+</html>
