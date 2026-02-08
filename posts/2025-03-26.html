@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>To Be Determined - Matrix Profiles 
+</title>
+    <link rel="stylesheet" href="../css/default.css" />
+    <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="alternate" type="application/rss+xml" title="David Anekstein's blog - To Be Determined" href="./rss.xml">
+    <link rel="alternate" type="application/atom+xml" title="David Anekstein's blog - To Be Determined" href="./atom.xml">
+</head>
+
+<body>
+    <div id="header">
+        <div id="logo">
+            <a href="../">To Be Determined</a>
+        </div>
+        <button id="menu-toggle" aria-label="Toggle navigation">☰</button>
+        <div id="navigation">
+            <a href="../posts.html">Posts</a>
+            <a href="../projects.html">Projects</a>
+            <a href="../publications.html">Publications</a>
+            <a href="../about.html">About</a>
+        </div>
+    </div>
+
+    <main role="main">
+        <article>
+    <section class="header">
+        <h1>Matrix Profiles 
+</h1>
+        <div class="info">
+            Posted on March 26, 2025
+            
+        </div>
+    </section>
+    <section>
+        <p>Lately I’ve been thinking about time series analysis to aid in <a href="https://apps.apple.com/us/app/reflect-track-anything/id6463800032">Reflect’s</a> insights features. Towards this end, I’ve had a Hacker News <a href="https://news.ycombinator.com/item?id=42609595">thread</a> about anomaly detection bookmarked in <a href="https://apps.apple.com/us/app/later-set-intentions/id6742691976">Later</a>. I finally got to looking at it and there was a comment that mentioned the article left out <a href="https://www.cs.ucr.edu/~eamonn/MatrixProfile.html">matrix profiles</a>, which I had never heard of, so I decided to look into them.</p>
+<h2 id="matrix-profiles">Matrix Profiles</h2>
+<p>Here is an example time series taken from a popular matrix profile library:</p>
+<figure>
+<img src="../images/mp-series.jpg" alt="Example time series">
+</figure>
+<p>A matrix profile is a vector that describes similarity between windowed subsets of the time series. Each index corresponds to the start of a section and its value’s magnitude corresponds to the uniqueness of that section. The higher the value, the more unique it is. The lower the value, the more common the pattern is.</p>
+<p>Here is the matrix profile for the time series shown above, for a 30 day window:</p>
+<figure>
+<img src="../images/mp-profile.jpg" alt="Matrix profile">
+</figure>
+<p>You can see that there are spikes in the matrix profile directly preceding deviations. That’s because each anomaly begins at these points. Anomalies aren’t always so clear, but I thought this time series made for a good illustration. The low points of the matrix profile are called motifs – they are the portions of the time series that are common.</p>
+<p>There is an auxiliary vector called the matrix profile index; each element contains a pointer to the index of section that is most similar to the current section. The relationship between a section and its most similar neighbor is not symmetric, meaning that if section A has the highest similarity to section B, it does not imply that section B has the highest similarity to section A. It’s like with Euclidean distance; imagine a scalene triangle with points A, B, and C. A’s closest neighbor is B, but B’s closest neighbor is C.</p>
+<p>It turns out that having the matrix profile gets you most of the way towards answering many of the questions one may have when presented with a time series. Anomaly detection is perhaps the most plain to see. The most anomalous sections are the ones with the highest values in the matrix profile, as I mentioned before.</p>
+<p>But another application, with a really cool algorithm behind it, is time series segmentation.</p>
+<h2 id="time-series-segmentation-with-matrix-profiles">Time Series Segmentation with Matrix Profiles</h2>
+<p>The idea behind time series segmentation is to divide the time series into regions that are self-similar. For example, if you have a group of birds chirping to one another, you may want to identify which portions of the time series correspond to each bird’s song.</p>
+<p>Given a matrix profile, we can draw lines above the matrix profile index to visualize the nearest neighbor relationships. Each line creates an arc.</p>
+<figure>
+<img src="../images/mp-arc.png" alt="Matrix profile arcs">
+<figcaption style="color: #555; font-style: italic; text-align: center; margin-top: 8px; font-size: 0.9em;">
+These arcs are above a different time series, not the matrix profile, but the arcs themselves are the relevant thing to focus on.
+</figcaption>
+</figure>
+<p>Now, a third vector is constructed by sliding a window and counting the number of arcs that appear above each point. This creates another series, called an arc curve, that describes inflection points where a new segment begins, denoted by local minima on the curve. The algorithm that computes these curves is called <a href="http://www.cs.ucr.edu/%7Eeamonn/Segmentation_ICDM.pdf">FLUSS</a>, and it takes as input the desired number of segments (also called regimes) as well as the matrix profile for the series.</p>
+<figure>
+<img src="../images/mp-arc-curve.png" alt="Arc curve" style="width: 100%; height: auto;">
+<figcaption style="color: #555; font-style: italic; text-align: center; margin-top: 8px; font-size: 0.9em;">
+Arc curve showing inflection points that identify segment boundaries
+</figcaption>
+</figure>
+<p>Another cool thing about this algorithm is that it remains robust to common time series artifcats and transformations such as downsampling, smoothing, and linear interpolation.</p>
+<p>Looking at our original time series, we can see what the segments look like with a window of 30 days and 4 desired segments:</p>
+<figure>
+<img src="../images/mp-segment.jpg" alt="Segmented time series">
+<figcaption style="color: #555; font-style: italic; text-align: center; margin-top: 8px; font-size: 0.9em;">
+Segmented time series with 4 distinct regimes identified using a 30-day window
+</figcaption>
+</figure>
+<h3 id="using-the-matrix-profile">Using the Matrix Profile</h3>
+<p>I’ve implemented these algorithms in <strong>Reflect</strong> and will soon be using it to help its users analyze their own personal time series data! As I mentioned before, matrix profiles are a very helpful primitive that sets the stage for further analysis. I’m happy to have casually found this and will be diving into the huge series of papers written about this fascinating idea.</p>
+<h4 id="sources">Sources</h4>
+<ul>
+<li><a href="https://www.cs.ucr.edu/~eamonn/MatrixProfile.html">Matrix Profile Homepage</a></li>
+<li><a href="http://www.cs.ucr.edu/%7Eeamonn/Segmentation_ICDM.pdf">Domain Agnostic Online Semantic Segmentation at Superhuman Performance Levels</a></li>
+<li><a href="https://matrixprofile.docs.matrixprofile.org/index.html">Matrix Profile Foundation</a></li>
+<li><a href="https://stumpy.readthedocs.io">Stumpy</a></li>
+</ul>
+    </section>
+</article>
+
+    </main>
+    <div id="footer">
+        <small><a href="../rss.xml">RSS</a></small>
+        <small><a href="../atom.xml">Atom</a></small>
+        <small>&copy; Copyright 2026, David Anekstein</small>
+    </div>
+
+    <script>
+        const menuToggle = document.getElementById('menu-toggle');
+        const navigation = document.getElementById('navigation');
+        
+        menuToggle.addEventListener('click', function() {
+            navigation.classList.toggle('open');
+            menuToggle.classList.toggle('open');
+        });
+    </script>
+</body>
+
+</html>

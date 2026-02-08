@@ -1,0 +1,582 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>To Be Determined - Prototyping a Small Genetic Algorithms Library in
+Haskell
+</title>
+    <link rel="stylesheet" href="../css/default.css" />
+    <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="alternate" type="application/rss+xml" title="David Anekstein's blog - To Be Determined" href="./rss.xml">
+    <link rel="alternate" type="application/atom+xml" title="David Anekstein's blog - To Be Determined" href="./atom.xml">
+</head>
+
+<body>
+    <div id="header">
+        <div id="logo">
+            <a href="../">To Be Determined</a>
+        </div>
+        <button id="menu-toggle" aria-label="Toggle navigation">☰</button>
+        <div id="navigation">
+            <a href="../posts.html">Posts</a>
+            <a href="../projects.html">Projects</a>
+            <a href="../publications.html">Publications</a>
+            <a href="../about.html">About</a>
+        </div>
+    </div>
+
+    <main role="main">
+        <article>
+    <section class="header">
+        <h1>Prototyping a Small Genetic Algorithms Library in
+Haskell
+</h1>
+        <div class="info">
+            Posted on November 15, 2019
+            
+        </div>
+    </section>
+    <section>
+        <p><em>This post assumes a basic understanding of genetic algorithms and the
+terminology associated with them, as well as a cursory understanding of
+recursion schemes; resources for both may be found scattered within the
+post. All source code can be found
+<a href="https://github.com/oinoom/gabble">here</a>.</em></p>
+<p>First blog post – yay! This post documents some of my experience
+getting practice with recursion schemes and some monadic computations in
+the context of prototyping a <a href="https://en.wikipedia.org/wiki/Genetic_algorithm">genetic
+algorithms</a> library.
+For a full-fledged, flexible, genetic algorithms library written in
+Haskell, I refer the reader to <a href="https://github.com/astanin/moo/">moo</a>.</p>
+<h2 id="getting-a-birds-eye-view">Getting a birds-eye view</h2>
+<p>Genetic algorithms are a type of heuristic in which candidate solutions
+to a problem are stochastically and incrementally evolved over time with
+the aim of producing performant ones; candidates, or individuals, are
+evolved with the help of genetic operators for selecting, manufacturing,
+and altering those individuals.</p>
+<h2 id="contextualizing-the-computations">Contextualizing the computations</h2>
+<p>Let’s start by defining some of the context in which our genetic
+algorithm should run. It would be nice to reference a configuration
+containing all the definitions and parameters we could need (like
+<a href="https://en.wikipedia.org/wiki/Mutation_(genetic_algorithm)">mutation</a>
+and
+<a href="https://en.wikipedia.org/wiki/Selection_(genetic_algorithm)">selection</a>
+methods), utilize and update a random number generator for generating
+and mutating individuals, and log intermediate data. The
+<a href="https://hackage.haskell.org/package/mtl-2.2.1/docs/Control-Monad-RWS-Lazy.html"><code>RWS</code></a>
+monad presents itself as a candidate for meeting these criteria, so
+let’s wrap it in a newtype:</p>
+<div id="cb1" class="sourceCode">
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">newtype</span> <span class="dt">GAContext</span> indv a <span class="ot">=</span> <span class="dt">GAContext</span> {</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="ot">    ctx ::</span> <span class="dt">RWS</span> (<span class="dt">GAConfig</span> indv) [<span class="dt">T.Text</span>] <span class="dt">PureMT</span> a</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>} <span class="kw">deriving</span> (</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>        <span class="dt">Functor</span>, </span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>        <span class="dt">Applicative</span>, </span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>        <span class="dt">Monad</span>, </span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>        <span class="dt">MonadReader</span> (<span class="dt">GAConfig</span> indv), </span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>        <span class="dt">MonadWriter</span> [<span class="dt">T.Text</span>],</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>        <span class="dt">MonadState</span> <span class="dt">PureMT</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    )</span></code></pre></div>
+</div>
+<p>With this definition (which requires <code>GeneralizedNewtypeDeriving</code>), we
+can reference and update the
+<a href="https://hackage.haskell.org/package/mersenne-random-pure64-0.2.2.0/docs/System-Random-Mersenne-Pure64.html"><code>PureMT</code></a>
+random number generator with <a href="https://hackage.haskell.org/package/mtl-2.2.1/docs/Control-Monad-State-Class.html#t:MonadState"><code>get</code> and
+<code>put</code></a>,
+refer to our configuration with
+<a href="https://hackage.haskell.org/package/mtl-2.2.1/docs/Control-Monad-Reader-Class.html#t:MonadReader"><code>ask</code></a>,
+and log intermediate data with
+<a href="https://hackage.haskell.org/package/mtl-2.2.1/docs/Control-Monad-Writer-Class.html"><code>tell</code></a>.</p>
+<h2 id="gathering-intermediate-data">Gathering intermediate data</h2>
+<p>One of my favorite genetic algorithm libraries,
+<a href="https://github.com/DEAP/deap">deap</a>, allows you to keep track of a
+<a href="https://deap.readthedocs.io/en/master/api/tools.html#deap.tools.HallOfFame">hall of
+fame</a>
+– a collection of the most-fit individuals. We can represent this
+collection as a continually-updated min-heap, where the worst-performing
+individuals at a particular point in time can be popped from the heap
+and discarded:</p>
+<div id="cb2" class="sourceCode">
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Data.Heap</span> <span class="kw">as</span> <span class="dt">Heap</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">HOF</span> a <span class="ot">=</span> <span class="dt">Heap.MinHeap</span> a</span></code></pre></div>
+</div>
+<p>It would be helpful to have a means of tracking the best individuals
+over time, along with any other data that could be gathered with every
+new generation. For this, a snapshot data type:</p>
+<div id="cb3" class="sourceCode">
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">GASnapshot</span> a <span class="ot">=</span> <span class="dt">Snapshot</span> {</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- the collection of individuals from the last generation</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="ot">    lastGeneration ::</span> <span class="dt">Vector</span> a</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- the collection of top performers, the Hall of Fame (HOF)</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  ,<span class="ot"> hof ::</span> <span class="dt">HOF</span> a </span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- the current generation id</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>  ,<span class="ot"> generationNumber ::</span> <span class="dt">Int</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>} <span class="kw">deriving</span> (<span class="dt">Show</span>)</span></code></pre></div>
+</div>
+<h2 id="configuring-the-genetic-algorithm">Configuring the genetic algorithm</h2>
+<p>Next we can define the data type containing all of our configuration
+parameters that we will then be able to reference in <code>GAContext</code>
+computations:</p>
+<div id="cb4" class="sourceCode">
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">GAConfig</span> i <span class="ot">=</span> <span class="dt">Config</span> {</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- the probability an individual is mutated</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="ot">    mutationRateInd ::</span> <span class="dt">Double</span> </span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- the probability a gene of an individual is mutated</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  ,<span class="ot"> mutationRateGene ::</span> <span class="dt">Double</span> </span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- the percentage of the population that gets replaced through recombination</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  ,<span class="ot"> crossoverRate ::</span> <span class="dt">Double</span> </span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- the population size</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  ,<span class="ot"> popSize ::</span> <span class="dt">Int</span> </span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- the mutation method</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>  ,<span class="ot"> mutate ::</span> i <span class="ot">-&gt;</span> <span class="dt">GAContext</span> i i </span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- the crossover method</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>  ,<span class="ot"> crossover ::</span> i <span class="ot">-&gt;</span> i <span class="ot">-&gt;</span> <span class="dt">GAContext</span> i i </span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- the method to create a new individual</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>  ,<span class="ot"> randomIndividual ::</span> <span class="dt">GAContext</span> i i  </span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- the selection method</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>  ,<span class="ot"> selectionMethod ::</span> <span class="dt">Vector</span> i <span class="ot">-&gt;</span> <span class="dt">GAContext</span> i (<span class="dt">Vector</span> i) </span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- the fitness function (higher fitness is preferred)</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>  ,<span class="ot"> fitness ::</span> i <span class="ot">-&gt;</span> <span class="dt">Double</span> </span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- the number of generations</span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>  ,<span class="ot"> numGenerations ::</span> <span class="dt">Int</span> </span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- the `hofSize` best individuals across all generations</span></span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>  ,<span class="ot"> hofSize ::</span> <span class="dt">Int</span> </span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- function for information sourced from most recent snapshot</span></span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>  ,<span class="ot"> logFunc ::</span> <span class="dt">GASnapshot</span> i <span class="ot">-&gt;</span> <span class="dt">GAContext</span> i () </span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+</div>
+<p>This configuration serves as the basic interface to the library. Once an
+instance of this data type is created, the genetic algorithm can do the
+bulk of its work.</p>
+<h2 id="utilizing-the-genetic-operators">Utilizing the genetic operators</h2>
+<p>The genetic algorithm will evolve our set of candidate solutions over
+time for a fixed number of steps, or generations.</p>
+<h3 id="grabbing-snapshots">Grabbing snapshots</h3>
+<p>Every generation of the genetic algorithm is determined by a <code>step</code>
+function:</p>
+<div id="cb5" class="sourceCode">
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ot">step ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">GASnapshot</span> a <span class="ot">-&gt;</span> <span class="dt">GAContext</span> a (<span class="dt">GASnapshot</span> a)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>step (<span class="dt">Snapshot</span> lastGen hof genNumber) <span class="ot">=</span> <span class="kw">do</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">Config</span> {hofSize, logFunc, popSize, selectionMethod} <span class="ot">&lt;-</span> ask </span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- select parents and create the next generation from them</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    selectedParents <span class="ot">&lt;-</span> selectionMethod lastGen</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- use the set of parents to create and mutate a new generation</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    children <span class="ot">&lt;-</span> crossAndMutate selectedParents popSize</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- update the HOF</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    updatedHOF <span class="ot">&lt;-</span> updateHOF hof children hofSize</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- construct the new snapshot</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> nextSnapshot <span class="ot">=</span> <span class="dt">Snapshot</span>{</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>        lastGeneration <span class="ot">=</span> children,</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>        hof <span class="ot">=</span> updatedHOF,</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>        generationNumber <span class="ot">=</span> genNumber <span class="op">+</span> <span class="dv">1</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- log intermediate results</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>    logFunc nextSnapshot</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- return the mutated generation</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span> nextSnapshot</span></code></pre></div>
+</div>
+<p>The <code>step</code> function takes the current snapshot, along with the
+user-defined configuration to select a portion of the population to pass
+genetic material,
+<a href="https://en.wikipedia.org/wiki/Crossover_(genetic_algorithm)#uniform_crossover">crossover</a>
+individuals from that subset to generate children, and mutate a portion
+of those children. With every pass, the Hall of Fame is updated with
+better-fit individuals, if they are found, and the subsequent snapshot
+is returned.</p>
+<h3 id="crossover-and-mutation">Crossover and Mutation</h3>
+<p>After parents are selected with the user-defined <code>selectionMethod</code>, the
+<code>Vector</code> of parents act as a seed from which children are produced. The
+generation of these children via crossover and their mutation are done
+in the same pass with a hylomorphism:</p>
+<div id="cb6" class="sourceCode">
+<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- repeatedly selects two new parents from `parents` from</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="co">-- which `n` total children are produced</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="ot">crossAndMutate ::</span> (<span class="dt">Vector</span> a) <span class="ot">-&gt;</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">GAContext</span> a (<span class="dt">Vector</span> a)</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>crossAndMutate parents n <span class="ot">=</span> hyloM toVector (newChild parents) n</span></code></pre></div>
+</div>
+<p>At this point, I refer the reader to the existing (and superior)
+resources on recursion schemes, if they are unfamiliar with the concept;
+I found <a href="https://github.com/passy/awesome-recursion-schemes">Awesome Recursion
+Schemes</a> to be
+helpful, particularly <a href="https://blog.sumtypeofway.com/recursion-schemes-part-2/">Patrick Thompson’s
+series</a> and
+<a href="https://jtobin.io/practical-recursion-schemes">Jared Tobin’s blog
+posts</a>.</p>
+<p>Briefly, and skipping over useful generalizations provided by the
+<a href="https://hackage.haskell.org/package/recursion-schemes"><code>recursion-schemes</code></a>
+library: catamorphisms tear down structures, anamorphisms construct
+structures, and hylomorphisms are the composition of an anamorphism and
+a catamorphism, i.e. the construction and tearing-down of an
+intermediate structure. Catamorphisms utilize a function to tear down
+their structures while anamorphisms utilize a function to build up their
+structures. Both functions can be found within
+<a href="https://hackage.haskell.org/package/category-extras-0.53.0/docs/Control-Functor-Algebra.html"><code>Control.Functor.Algebra</code></a>
+and are representations of the morphisms that each comprise a third of
+an
+<a href="https://www.schoolofhaskell.com/user/bartosz/understanding-algebras">F-Algebra</a>
+and <a href="https://en.wikipedia.org/wiki/F-coalgebra">F-CoAlgebra</a>
+respectively:</p>
+<div id="cb7" class="sourceCode">
+<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">Algebra</span> f a <span class="ot">=</span> f a <span class="ot">-&gt;</span> a</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">CoAlgebra</span> f a <span class="ot">=</span> a <span class="ot">-&gt;</span> f a</span></code></pre></div>
+</div>
+<p>Normal hylomorphisms have the type:</p>
+<div id="cb8" class="sourceCode">
+<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="ot">hylo ::</span> <span class="dt">Functor</span> f <span class="ot">=&gt;</span> (<span class="dt">Algebra</span> f b) <span class="ot">-&gt;</span> (<span class="dt">CoAlgebra</span> f a) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> b </span></code></pre></div>
+</div>
+<p>For our case, the monadic context of <code>GAContext</code> needs to be preserved.
+The haskell package
+<a href="https://hackage.haskell.org/package/data-fix-0.2.0/docs/Data-Fix.html"><code>data-fix</code></a>
+offers the <code>hyloM</code> function, which instead relies on the monadic
+<code>AlgebraM</code> and <code>CoAlgebraM</code> types:</p>
+<div id="cb9" class="sourceCode">
+<div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">AlgebraM</span> m f a <span class="ot">=</span> f a <span class="ot">-&gt;</span> m a</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">CoAlgebraM</span> m f a <span class="ot">=</span> a <span class="ot">-&gt;</span> m (f a)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="ot">hyloM ::</span> (<span class="dt">Functor</span> f, <span class="dt">Monad</span> m) <span class="ot">=&gt;</span> (<span class="dt">AlgebraM</span> m f b) <span class="ot">-&gt;</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>                                 (<span class="dt">CoAlgebraM</span> m f a) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> m b </span></code></pre></div>
+</div>
+<p>With the monadic hylomorphism in <code>crossAndMutate</code> above, a fixed list of
+mutated children is unfolded from a seed using <code>newChild</code> and folded
+into a vector of the same type using <code>toVector</code>. This yields the next
+generation of candidate solutions for the genetic algorithm.</p>
+<p>Let’s take a look at the <code>newChild</code> function:</p>
+<div id="cb10" class="sourceCode">
+<div class="sourceCode" id="cb10"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- selects two parents to breed, a child is born, joy to the world</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="ot">newChild ::</span> (<span class="dt">Vector</span> a) <span class="ot">-&gt;</span> <span class="dt">CoAlgebraM</span> (<span class="dt">GAContext</span> a) (<span class="dt">ListF</span> a) <span class="dt">Int</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>newChild parents <span class="dv">0</span> <span class="ot">=</span> <span class="fu">return</span> <span class="dt">Nil</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>newChild parents m <span class="ot">=</span> <span class="kw">do</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- get mutation and crossover methods</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">Config</span> {crossover, mutate} <span class="ot">&lt;-</span> ask</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- get two random indices</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>    i <span class="ot">&lt;-</span> randomI</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>    j <span class="ot">&lt;-</span> randomI</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- from the two indices, grab two parents</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> p1 <span class="ot">=</span> parents <span class="op">!</span> (i <span class="ot">`mod`</span> (<span class="fu">length</span> parents))</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> p2 <span class="ot">=</span> parents <span class="op">!</span> (j <span class="ot">`mod`</span> (<span class="fu">length</span> parents))</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- make a child</span></span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>    child <span class="ot">&lt;-</span> crossover p1 p2</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- mutate the child</span></span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>    mutatedChild <span class="ot">&lt;-</span> mutate child</span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- add the child to the collection</span></span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span> <span class="op">$</span> <span class="dt">Cons</span> mutatedChild (m<span class="op">-</span><span class="dv">1</span>)</span></code></pre></div>
+</div>
+<p><code>newChild</code> generates a new individual with the user-defined <code>crossover</code>
+function from two parents chosen at random from the group individuals
+selected to pass on their genetic material. We then apply the
+user-defined <code>mutate</code> function to the child and append that mutated
+individual to the in-progress collection of children. This is the
+anamorphic half of the hylomorphism.</p>
+<p>The catamorphic half of the transformation is accomplished with
+<code>toVector</code> below:</p>
+<div id="cb11" class="sourceCode">
+<div class="sourceCode" id="cb11"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- converts Fix (ListF a) into Vector a</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="ot">toVector ::</span> <span class="dt">AlgebraM</span> (<span class="dt">GAContext</span> a) (<span class="dt">ListF</span> a) (<span class="dt">Vector</span> a)</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>toVector <span class="ot">=</span> <span class="fu">return</span> <span class="op">.</span> embed</span></code></pre></div>
+</div>
+<p>and we can see that it is rather straightfoward, once we make a
+<code>Corecursive</code> instance of <code>Vector</code> to leverage the <code>embed</code> function:</p>
+<div id="cb12" class="sourceCode">
+<div class="sourceCode" id="cb12"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="kw">instance</span> <span class="dt">Base</span> (<span class="dt">Vector</span> a) <span class="ot">=</span> <span class="dt">ListF</span> a</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="kw">instance</span> <span class="dt">Corecursive</span> (<span class="dt">Vector</span> a) <span class="kw">where</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  embed (<span class="dt">Cons</span> x xs) <span class="ot">=</span> x <span class="ot">`V.cons`</span> xs</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>  embed <span class="dt">Nil</span> <span class="ot">=</span> V.empty</span></code></pre></div>
+</div>
+<p>In addition to the above instance, we will find later on, with our use
+of
+<a href="https://hackage.haskell.org/package/recursion-schemes-5.1.3/docs/src/Data.Functor.Foldable.html#cata"><code>cata</code></a>
+that defining a <code>Recursive</code> instance of <code>Vector</code> is also necessary:</p>
+<div id="cb13" class="sourceCode">
+<div class="sourceCode" id="cb13"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="kw">instance</span> <span class="dt">Recursive</span> (<span class="dt">Vector</span> a) <span class="kw">where</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  project xs <span class="op">|</span> V.null xs <span class="ot">=</span> <span class="dt">Nil</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>             <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> <span class="dt">Cons</span> (V.head xs) (V.tail xs)</span></code></pre></div>
+</div>
+<h3 id="updating-the-hall-of-fame">Updating the Hall of Fame</h3>
+<p>Once the collection of mutated children has been returned by
+<code>crossAndMutate</code>, we will want to update the Hall of Fame with any
+individuals that perform better than the extant individuals therein.
+Let’s create a function that will take a vector of individuals and
+insert them all into the heap representing the Hall of Fame:</p>
+<div id="cb14" class="sourceCode">
+<div class="sourceCode" id="cb14"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- inserts elements from a list into a heap</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="ot">insertHeap ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">HOF</span> a <span class="ot">-&gt;</span> (<span class="dt">Vector</span> a) <span class="ot">-&gt;</span> <span class="dt">HOF</span> a</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>insertHeap hof <span class="ot">=</span> cata insert <span class="kw">where</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    insert <span class="dt">Nil</span> <span class="ot">=</span> hof</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>    insert (<span class="dt">Cons</span> a heap) <span class="ot">=</span> Heap.insert a heap</span></code></pre></div>
+</div>
+<p>Simple enough. Our catamorphism breaks down our <code>Vector</code> into a <code>HOF</code>;
+all it needs is the existing one into which we can insert the elements.</p>
+<p>With this, we can update the current <code>HOF</code> by dumping the latest
+population into it and popping off minimally-fit individuals until the
+HOF is back at its original size.</p>
+<div id="cb15" class="sourceCode">
+<div class="sourceCode" id="cb15"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- updates the HOF by removing the worst-fit individuals from the min-heap</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="ot">updateHOF ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">HOF</span> a <span class="ot">-&gt;</span> <span class="dt">Vector</span> a <span class="ot">-&gt;</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">GAContext</span> a (<span class="dt">HOF</span> a)</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>updateHOF hof pop hofSize <span class="ot">=</span> <span class="fu">return</span> <span class="op">.</span> Heap.drop n <span class="op">$</span> oversizedHOF <span class="kw">where</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- insert all of the current population</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>    oversizedHOF <span class="ot">=</span> insertHeap hof pop</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- drop all but hofSize individuals</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>    n <span class="ot">=</span> V.length pop <span class="op">-</span> <span class="kw">if</span> Heap.isEmpty hof <span class="kw">then</span> hofSize <span class="kw">else</span> <span class="dv">0</span></span></code></pre></div>
+</div>
+<h2 id="invoking-the-genetic-algorithm">Invoking the Genetic Algorithm</h2>
+<p>Now that we have outlined the flow of the genetic algorithm, we need to
+provide an initial population. For this, we leverage the user-defined
+<code>randomIndividual</code> function, provided within the ever-present
+<code>GAConfig</code>:</p>
+<div id="cb16" class="sourceCode">
+<div class="sourceCode" id="cb16"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- creates a vector of random individuals</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="ot">makePopulation ::</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">GAContext</span> a (<span class="dt">Vector</span> a)</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>makePopulation s <span class="ot">=</span> hyloM toVector addRandomInd s <span class="kw">where</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- creates a random individual and adds it to the collection</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="ot">    addRandomInd ::</span> <span class="dt">CoAlgebraM</span> (<span class="dt">GAContext</span> a) (<span class="dt">ListF</span> a) <span class="dt">Int</span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>    addRandomInd <span class="dv">0</span> <span class="ot">=</span> <span class="fu">return</span> <span class="dt">Nil</span></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>    addRandomInd n <span class="ot">=</span> <span class="kw">do</span></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>        <span class="co">-- get a new, random individual</span></span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>        ind <span class="ot">&lt;-</span> randomIndividual <span class="op">=&lt;&lt;</span> ask</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>        <span class="co">-- add it to the collection</span></span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>        <span class="fu">return</span> <span class="op">$</span> <span class="dt">Cons</span> ind (n<span class="op">-</span><span class="dv">1</span>)</span></code></pre></div>
+</div>
+<p>We now have all pieces necessary for running the genetic algorithm for
+one complete generation. After some initial setup, we can run for the
+user-specified number of generations:</p>
+<div id="cb17" class="sourceCode">
+<div class="sourceCode" id="cb17"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="ot">runGA ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">GAContext</span> a (<span class="dt">GASnapshot</span> a)</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>runGA <span class="ot">=</span> <span class="kw">do</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">Config</span> {numGenerations, popSize, hofSize} <span class="ot">&lt;-</span> ask</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- initialize the population</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>    initialPop <span class="ot">&lt;-</span> makePopulation popSize</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- set up the initial Hall of Fame</span></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>    initialHOF <span class="ot">&lt;-</span> updateHOF (Heap.empty<span class="ot"> ::</span> <span class="dt">HOF</span> a) initialPop hofSize</span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- set up the initial snapshot</span></span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> snapshot <span class="ot">=</span> <span class="dt">Snapshot</span> {</span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>                lastGeneration <span class="ot">=</span> initialPop,</span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>                hof <span class="ot">=</span> initialHOF,</span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>                generationNumber <span class="ot">=</span> <span class="dv">0</span></span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>              }</span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- run the genetic algorithm</span></span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>    runN numGenerations step snapshot</span></code></pre></div>
+</div>
+<p>Using our configuration parameters we create an initial snapshot and
+pass that to a function that runs the step function for a set number of
+iterations equal to the number of generations. Let’s take a look at the
+definition of <code>runN</code>:</p>
+<div id="cb18" class="sourceCode">
+<div class="sourceCode" id="cb18"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- a function reminiscent of iterateM that completes</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="co">-- after `n` evaluations, returning the `n`th result</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="ot">runN ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> m a) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> m a</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>runN <span class="dv">0</span> _ a <span class="ot">=</span> <span class="fu">return</span> a</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>runN n f a <span class="ot">=</span> <span class="kw">do</span></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>    a' <span class="ot">&lt;-</span> f a</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>    runN (n<span class="op">-</span><span class="dv">1</span>) f a'</span></code></pre></div>
+</div>
+<p>it takes a function (in our case <code>step</code>) and applies that function <code>n</code>
+times, returning the final result.</p>
+<p>Finally, we can run the <code>GAContext</code>, a newtype wrapper for the <code>RWS</code>
+monad, with <code>runRWS</code> and <code>evalRWS</code>:</p>
+<div id="cb19" class="sourceCode">
+<div class="sourceCode" id="cb19"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- from a new rng, run the genetic algorithm</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="ot">evalGA ::</span> <span class="dt">Ord</span> i <span class="ot">=&gt;</span> <span class="dt">GAConfig</span> i <span class="ot">-&gt;</span> <span class="dt">IO</span> (<span class="dt">GASnapshot</span> i, [<span class="dt">T.Text</span>])</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>evalGA cfg <span class="ot">=</span> newPureMT <span class="op">&gt;&gt;=</span> (<span class="fu">return</span> <span class="op">.</span> evalGASeed cfg)</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a><span class="co">-- from a user-supplied rng, run the genetic algorithm</span></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a><span class="ot">evalGASeed ::</span> <span class="dt">Ord</span> i <span class="ot">=&gt;</span> <span class="dt">GAConfig</span> i <span class="ot">-&gt;</span> <span class="dt">PureMT</span> <span class="ot">-&gt;</span> (<span class="dt">GASnapshot</span> i, [<span class="dt">T.Text</span>])</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>evalGASeed cfg rng <span class="ot">=</span> evalRWS (ctx runGA) cfg rng</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a><span class="co">-- from a user-supplied rng, run the genetic algorithm and return the updated seed</span></span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a><span class="ot">runGASeed ::</span> <span class="dt">Ord</span> i <span class="ot">=&gt;</span> <span class="dt">GAConfig</span> i <span class="ot">-&gt;</span> <span class="dt">PureMT</span> <span class="ot">-&gt;</span> (<span class="dt">GASnapshot</span> i, <span class="dt">PureMT</span>, [<span class="dt">T.Text</span>])</span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>runGASeed cfg rng <span class="ot">=</span> runRWS (ctx runGA) cfg rng</span></code></pre></div>
+</div>
+<p>With this, all the user needs to do is define their genetic operators
+and fitness functions for their own individual representation, and they
+should be able to call one of these three functions to run the genetic
+algorithm.</p>
+<h2 id="using-the-library">Using the library</h2>
+<p>Let’s see an example of it in action with a very simple problem:
+maximizing the number of 1’s in a 500-bit binary string. Source can be
+found in
+<a href="https://github.com/oinoom/gabble/blob/dev-0.1.0.0/src/BinaryInd.hs"><code>BinaryInd.hs</code></a>.</p>
+<h3 id="representation">Representation</h3>
+<p>We’ll represent the binary string as a list of <code>Bool</code>:</p>
+<div id="cb20" class="sourceCode">
+<div class="sourceCode" id="cb20"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">BinaryInd</span> <span class="ot">=</span> <span class="dt">BI</span> [<span class="dt">Bool</span>] <span class="kw">deriving</span> (<span class="dt">Show</span>)</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="kw">instance</span> <span class="dt">Eq</span> <span class="dt">BinaryInd</span> <span class="kw">where</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>    (<span class="dt">BI</span> b1) <span class="op">==</span> (<span class="dt">BI</span> b2) <span class="ot">=</span> b1 <span class="op">==</span> b2</span></code></pre></div>
+</div>
+<h3 id="fitness-function">Fitness function</h3>
+<p>We can start simply by defining the fitness function for this individual
+representation, which is just the number of <code>True</code> booleans in the list:</p>
+<div id="cb21" class="sourceCode">
+<div class="sourceCode" id="cb21"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- count the number of `True` bools in the chromosome</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="ot">score ::</span> <span class="dt">BinaryInd</span> <span class="ot">-&gt;</span> <span class="dt">Double</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>score (<span class="dt">BI</span> bs) <span class="ot">=</span> <span class="fu">fromIntegral</span> <span class="op">.</span> <span class="fu">length</span> <span class="op">.</span> <span class="fu">filter</span> <span class="fu">id</span> <span class="op">$</span> bs</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a><span class="kw">instance</span> <span class="dt">Ord</span> <span class="dt">BinaryInd</span> <span class="kw">where</span></span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>    b1 <span class="ot">`compare`</span> b2 <span class="ot">=</span> (score b1) <span class="ot">`compare`</span> (score b2)</span></code></pre></div>
+</div>
+<h3 id="random-individuals">Random individuals</h3>
+<p>Next we can define a function to create a new and random bit string of
+length 500:</p>
+<div id="cb22" class="sourceCode">
+<div class="sourceCode" id="cb22"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- create an individual, represented by a list, by</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="co">-- initializing its elements randomly</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a><span class="ot">new ::</span> <span class="dt">GAContext</span> <span class="dt">BinaryInd</span> <span class="dt">BinaryInd</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>new <span class="ot">=</span> <span class="fu">fmap</span> <span class="dt">BI</span> <span class="op">$</span> replicateM <span class="dv">500</span> randomBool</span></code></pre></div>
+</div>
+<h3 id="mutation">Mutation</h3>
+<p>We’ll also need to provide a way to mutate our individual:</p>
+<div id="cb23" class="sourceCode">
+<div class="sourceCode" id="cb23"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- mutate a binary string representation</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="ot">mutate ::</span> <span class="dt">BinaryInd</span> <span class="ot">-&gt;</span> <span class="dt">GAContext</span> <span class="dt">BinaryInd</span> <span class="dt">BinaryInd</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>mutate ind<span class="op">@</span>(<span class="dt">BI</span> bs) <span class="ot">=</span> <span class="kw">do</span></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>        <span class="co">-- grab individual and gene mutation rates</span></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>        <span class="dt">Config</span>{mutationRateGene, mutationRateInd} <span class="ot">&lt;-</span> ask</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>        <span class="co">-- get a random double</span></span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>        indp <span class="ot">&lt;-</span> randomD</span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>        <span class="co">-- if the value is less than mutation rate for an individual</span></span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>        <span class="kw">if</span> indp <span class="op">&lt;</span> mutationRateInd <span class="kw">then</span></span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>            <span class="co">-- mutate each bit with `mutationRateGene` probability</span></span>
+<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a>            <span class="fu">fmap</span> <span class="dt">BI</span> <span class="op">$</span> <span class="fu">mapM</span> (mutateBool mutationRateGene) bs</span>
+<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a>        <span class="kw">else</span></span>
+<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a>            <span class="co">-- return the unaltered individual</span></span>
+<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a>            <span class="fu">return</span> ind</span>
+<span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a><span class="co">-- mutate a boolean by flipping it</span></span>
+<span id="cb23-17"><a href="#cb23-17" aria-hidden="true" tabindex="-1"></a><span class="ot">mutateBool ::</span> <span class="dt">Double</span> <span class="ot">-&gt;</span> <span class="dt">Bool</span> <span class="ot">-&gt;</span> <span class="dt">GAContext</span> a <span class="dt">Bool</span></span>
+<span id="cb23-18"><a href="#cb23-18" aria-hidden="true" tabindex="-1"></a>mutateBool p x <span class="ot">=</span> <span class="kw">do</span></span>
+<span id="cb23-19"><a href="#cb23-19" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- get a random double</span></span>
+<span id="cb23-20"><a href="#cb23-20" aria-hidden="true" tabindex="-1"></a>    indp <span class="ot">&lt;-</span> randomD</span>
+<span id="cb23-21"><a href="#cb23-21" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- determine whether or not to flip the bit</span></span>
+<span id="cb23-22"><a href="#cb23-22" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span> <span class="op">$</span> <span class="kw">if</span> indp <span class="op">&lt;</span> p <span class="kw">then</span> <span class="fu">not</span> x <span class="kw">else</span> x</span></code></pre></div>
+</div>
+<p>In <code>mutate</code>, we get a random double with a helper function <code>randomD</code> and
+decide whether the given individual is to be mutated at all. If it is to
+be mutated, iterate over the given individual and determine whether the
+genes themselves (the bits) should be mutated with some given
+probability with <code>mutateBool</code>.</p>
+<h3 id="crossover">Crossover</h3>
+<p>To cross two parents, we’ll generate a bitmask that will inform us
+whether a given gene should be taken from the first parent or the second
+parent:</p>
+<div id="cb24" class="sourceCode">
+<div class="sourceCode" id="cb24"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- recombine two individuals from the population</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="ot">crossover ::</span> <span class="dt">BinaryInd</span> <span class="ot">-&gt;</span> <span class="dt">BinaryInd</span> <span class="ot">-&gt;</span> <span class="dt">GAContext</span> <span class="dt">BinaryInd</span> <span class="dt">BinaryInd</span></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>crossover (<span class="dt">BI</span> i1) (<span class="dt">BI</span> i2) <span class="ot">=</span> <span class="kw">do</span></span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>        <span class="co">-- get the crossover rate</span></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>        <span class="dt">Config</span>{crossoverRate} <span class="ot">&lt;-</span> ask</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>        <span class="co">-- get a random double</span></span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>        indp <span class="ot">&lt;-</span> randomD</span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>        <span class="kw">if</span> indp <span class="op">&lt;</span> crossoverRate <span class="kw">then</span> <span class="kw">do</span> <span class="co">-- perform crossover</span></span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>            <span class="co">-- get booleans specifying which gene to take</span></span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>            code <span class="ot">&lt;-</span> replicateM (<span class="fu">length</span> i1) randomBool</span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a>            <span class="co">-- choose genetic material from first or second parent</span></span>
+<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a>            <span class="kw">let</span> eitherOr <span class="ot">=</span> (\takeThis this that <span class="ot">-&gt;</span> <span class="kw">if</span> takeThis <span class="kw">then</span> this <span class="kw">else</span> that)</span>
+<span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a>            <span class="co">-- perform uniform crossover</span></span>
+<span id="cb24-14"><a href="#cb24-14" aria-hidden="true" tabindex="-1"></a>            <span class="fu">return</span> <span class="op">.</span> <span class="dt">BI</span> <span class="op">$</span> <span class="fu">zipWith3</span> eitherOr code i1 i2</span>
+<span id="cb24-15"><a href="#cb24-15" aria-hidden="true" tabindex="-1"></a>        <span class="kw">else</span> <span class="kw">do</span></span>
+<span id="cb24-16"><a href="#cb24-16" aria-hidden="true" tabindex="-1"></a>            <span class="co">-- choose the genetic material from one of the parents</span></span>
+<span id="cb24-17"><a href="#cb24-17" aria-hidden="true" tabindex="-1"></a>            chooseFirstParent <span class="ot">&lt;-</span> randomBool</span>
+<span id="cb24-18"><a href="#cb24-18" aria-hidden="true" tabindex="-1"></a>            <span class="fu">return</span> <span class="op">.</span> <span class="dt">BI</span> <span class="op">$</span> <span class="kw">if</span> chooseFirstParent <span class="kw">then</span> i1 <span class="kw">else</span> i2</span></code></pre></div>
+</div>
+<p>This type of crossover is called <a href="https://en.wikipedia.org/wiki/Crossover_(genetic_algorithm)#Uniform_crossover">uniform
+crossover</a>.</p>
+<h3 id="selection">Selection</h3>
+<p>Our selection scheme is simple: take the best 20% of the population:</p>
+<div id="cb25" class="sourceCode">
+<div class="sourceCode" id="cb25"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="ot">select ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">Vector</span> a <span class="ot">-&gt;</span> <span class="dt">GAContext</span> a (<span class="dt">Vector</span> a)</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>select pop <span class="ot">=</span> <span class="kw">do</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- get the population size</span></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">Config</span>{popSize} <span class="ot">&lt;-</span> ask</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- get the number of individuals to breed</span></span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> numToSelect <span class="ot">=</span> <span class="fu">round</span> <span class="op">$</span> <span class="fl">0.2</span> <span class="op">*</span> (<span class="fu">fromIntegral</span> popSize)</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- get the top 20% of the best-performing individuals</span></span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> selectedParents <span class="ot">=</span> V.take numToSelect <span class="op">.</span> V.reverse <span class="op">$</span> V.modify <span class="fu">sort</span> pop</span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span> selectedParents</span></code></pre></div>
+</div>
+<h3 id="optimizing-our-bit-string">Optimizing our bit string</h3>
+<p>Almost there! It’s time to run the genetic algorithm in our main
+function by instantiating a <code>GAConfig</code> with the functions we’ve defined:</p>
+<div id="cb26" class="sourceCode">
+<div class="sourceCode" id="cb26"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">BinaryInd</span> <span class="kw">as</span> <span class="dt">BI</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="ot">main ::</span> <span class="dt">IO</span> ()</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>main <span class="ot">=</span> <span class="kw">do</span></span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> cfg <span class="ot">=</span> <span class="dt">Config</span> {</span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>        mutationRateInd <span class="ot">=</span> <span class="fl">0.8</span></span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>      , mutationRateGene <span class="ot">=</span> <span class="fl">0.02</span></span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>      , crossoverRate <span class="ot">=</span> <span class="fl">0.7</span></span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a>      , popSize <span class="ot">=</span> <span class="dv">100</span></span>
+<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a>      , mutate <span class="ot">=</span> BI.mutate</span>
+<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a>      , crossover <span class="ot">=</span> BI.crossover</span>
+<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a>      , randomIndividual <span class="ot">=</span> BI.new</span>
+<span id="cb26-14"><a href="#cb26-14" aria-hidden="true" tabindex="-1"></a>      , selectionMethod <span class="ot">=</span> BI.select</span>
+<span id="cb26-15"><a href="#cb26-15" aria-hidden="true" tabindex="-1"></a>      , fitness <span class="ot">=</span> BI.score</span>
+<span id="cb26-16"><a href="#cb26-16" aria-hidden="true" tabindex="-1"></a>      , numGenerations <span class="ot">=</span> <span class="dv">200</span></span>
+<span id="cb26-17"><a href="#cb26-17" aria-hidden="true" tabindex="-1"></a>      , hofSize <span class="ot">=</span> <span class="dv">1</span></span>
+<span id="cb26-18"><a href="#cb26-18" aria-hidden="true" tabindex="-1"></a>      , logFunc <span class="ot">=</span> logHOF</span>
+<span id="cb26-19"><a href="#cb26-19" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb26-20"><a href="#cb26-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-21"><a href="#cb26-21" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- run the genetic algorithm</span></span>
+<span id="cb26-22"><a href="#cb26-22" aria-hidden="true" tabindex="-1"></a>    (finalSnapshot, progress) <span class="ot">&lt;-</span> evalGA cfg</span>
+<span id="cb26-23"><a href="#cb26-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-24"><a href="#cb26-24" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- output the best fitnesses as they're found</span></span>
+<span id="cb26-25"><a href="#cb26-25" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mapM_</span> (<span class="fu">putStrLn</span> <span class="op">.</span> T.unpack) progress</span></code></pre></div>
+</div>
+<p>We call the <code>evalGA</code> function on our configuration to yield the final
+snapshot containing the hof. We can log the progress of the genetic
+algorithm by printing the logging messages written with <code>tell</code> and
+<code>logFunc</code>.</p>
+<p>The <code>logHOF</code> function puts the scores of the <code>HOF</code> into CSV format for
+easy graphing:</p>
+<div id="cb27" class="sourceCode">
+<div class="sourceCode" id="cb27"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="ot">logHOF ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">GASnapshot</span> a <span class="ot">-&gt;</span> <span class="dt">GAContext</span> a ()</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>logHOF <span class="dt">Snapshot</span>{hof, generationNumber} <span class="ot">=</span> <span class="kw">do</span></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- get the fitness function</span></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">Config</span> {fitness} <span class="ot">&lt;-</span> ask</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- get string representations of the best individuals</span></span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> best <span class="ot">=</span> <span class="fu">map</span> (T.pack <span class="op">.</span> <span class="fu">show</span> <span class="op">.</span> fitness) <span class="op">$</span> Heap.toList hof</span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- craft the comma-separated line</span></span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> msg <span class="ot">=</span> [T.concat <span class="op">$</span> intersperse (T.pack <span class="st">&quot;,&quot;</span>) best]</span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- log the line</span></span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>    tell msg</span></code></pre></div>
+</div>
+<p>And here we can see how the GA improves fitness across generations:</p>
+<p><img src="../images/progress.png" /></p>
+<p>We can see that the GA is does pretty well for our little problem,
+making it most of the way towards an optimal solution within the first
+100 generations. Not bad!</p>
+<h2 id="wrapping-up">Wrapping up</h2>
+<p>We’ve prototyped a library that can allow us to see if our given (and
+contrived) problem could stand to benefit from a genetic algorithm. I
+realize I’ve glossed over some details here, such as the <code>randomD</code> and
+<code>randomBool</code> definitions; if you want code that compiles, you’ll need to
+consult the <a href="https://github.com/oinoom/gabble">source</a>.</p>
+<p>I also briefly mentioned the resources for recursion schemes, but if
+you’d like more examples (namely with <code>cata</code>, <code>cataM</code>, and <code>anaM</code>) I’ve
+created a recursion-scheme-based analogue to <code>BinaryInd</code> in
+<a href="https://github.com/oinoom/gabble/blob/dev-0.1.0.0/src/BinaryIndRec.hs"><code>BinaryIndRec.hs</code></a>.</p>
+    </section>
+</article>
+
+    </main>
+    <div id="footer">
+        <small><a href="../rss.xml">RSS</a></small>
+        <small><a href="../atom.xml">Atom</a></small>
+        <small>&copy; Copyright 2026, David Anekstein</small>
+    </div>
+
+    <script>
+        const menuToggle = document.getElementById('menu-toggle');
+        const navigation = document.getElementById('navigation');
+        
+        menuToggle.addEventListener('click', function() {
+            navigation.classList.toggle('open');
+            menuToggle.classList.toggle('open');
+        });
+    </script>
+</body>
+
+</html>

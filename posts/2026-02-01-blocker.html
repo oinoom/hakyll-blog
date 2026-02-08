@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>To Be Determined - Solving Soma
+</title>
+    <link rel="stylesheet" href="../css/default.css" />
+    <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="alternate" type="application/rss+xml" title="David Anekstein's blog - To Be Determined" href="./rss.xml">
+    <link rel="alternate" type="application/atom+xml" title="David Anekstein's blog - To Be Determined" href="./atom.xml">
+</head>
+
+<body>
+    <div id="header">
+        <div id="logo">
+            <a href="../">To Be Determined</a>
+        </div>
+        <button id="menu-toggle" aria-label="Toggle navigation">☰</button>
+        <div id="navigation">
+            <a href="../posts.html">Posts</a>
+            <a href="../projects.html">Projects</a>
+            <a href="../publications.html">Publications</a>
+            <a href="../about.html">About</a>
+        </div>
+    </div>
+
+    <main role="main">
+        <article>
+    <section class="header">
+        <h1>Solving Soma
+</h1>
+        <div class="info">
+            Posted on February  1, 2026
+            
+        </div>
+    </section>
+    <section>
+        <p>Years ago in New York City’s Bryant park I came across a pop up store that sold puzzles, one of which was this wooden cube. I didn’t know what it was back then, but simplicity of the puzzle and the feel of the wooden blocks was attractive to me and so I bought it.</p>
+<p><link rel="stylesheet" href="../posts/blocker/css/style.css"></p>
+<figure class="interactive">
+<div id="viz-intro-cube" class="canvas-container">
+<canvas id="intro-canvas">
+</canvas>
+<p><img class="fallback-image" src="../posts/blocker/images/fallback-intro.png" alt="A 3x3x3 wooden Soma cube puzzle, assembled from 7 interlocking pieces">
+<button id="intro-reassemble" type="button" aria-label="Reassemble puzzle" title="Reassemble puzzle" hidden><span aria-hidden="true">↻</span></button></p>
+</div>
+<div class="controls">
+<p><input type="range" id="intro-explode" class="mouse-only" min="0" max="100" value="0">
+<span class="touch-only">Hold and drag a piece, spread to explode</span></p>
+</div>
+</figure>
+<p>For the last decade or so it’s been on my desk. Occasionally I take it apart and challenge myself to assemble it. It can take anywhere from 30 seconds to 30 minutes depending on how lucky I am with the initial placement.</p>
+<p>Looking for further esoteric and probably-useless topics to dive deep into and blog about, I decided to try my hand at writing a solver for this puzzle.</p>
+<h2 id="high-level-approach">High-Level Approach</h2>
+<p>The first naive thing I thought of was a sort of backtracking algorithm, placing piece by piece until a cube was formed. The algorithm would move through each non-negative <code>(x,y,z)</code> coordinate and try to place a piece. If a piece couldn’t be placed (because it was out of bounds or colliding with another piece), it would be rotated until it could either be placed or until the next piece could be tried. That pattern would repeat for each unoccupied cell of the cube’s space until the last piece could be placed. Being able to place the last piece without collision means that a valid solution has been found.</p>
+<h2 id="data-representation">Data Representation</h2>
+<h3 id="piece-coordinates">Piece Coordinates</h3>
+<p>Each piece is represented as an array of (x,y,z) coordinates, normalized to the origin of the grid, i.e. each starting from (0,0,0), and with their shape extending positively along each axis. I did this for simplicity because I had the puzzle in front of me while trying to encode each shape.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">pub</span> <span class="kw">type</span> Coord <span class="op">=</span> (<span class="dt">i32</span><span class="op">,</span> <span class="dt">i32</span><span class="op">,</span> <span class="dt">i32</span>)<span class="op">;</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">pub</span> <span class="kw">const</span> PIECES<span class="op">:</span> <span class="op">&amp;</span>[<span class="op">&amp;</span>[Coord]] <span class="op">=</span> <span class="op">&amp;</span>[</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="op">&amp;</span>[(<span class="dv">0</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">0</span>)<span class="op">,</span> (<span class="dv">1</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">0</span>)<span class="op">,</span> (<span class="dv">2</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">0</span>)<span class="op">,</span> (<span class="dv">0</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">0</span>)]<span class="op">,</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    <span class="op">&amp;</span>[(<span class="dv">0</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">0</span>)<span class="op">,</span> (<span class="dv">1</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">0</span>)<span class="op">,</span> (<span class="dv">2</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">0</span>)<span class="op">,</span> (<span class="dv">1</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">0</span>)]<span class="op">,</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">&amp;</span>[(<span class="dv">0</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">0</span>)<span class="op">,</span> (<span class="dv">1</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">0</span>)<span class="op">,</span> (<span class="dv">1</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">0</span>)<span class="op">,</span> (<span class="dv">2</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">0</span>)]<span class="op">,</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">&amp;</span>[(<span class="dv">0</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">0</span>)<span class="op">,</span> (<span class="dv">1</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">0</span>)<span class="op">,</span> (<span class="dv">0</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">0</span>)]<span class="op">,</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    <span class="op">&amp;</span>[(<span class="dv">0</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">0</span>)<span class="op">,</span> (<span class="dv">1</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">0</span>)<span class="op">,</span> (<span class="dv">0</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">0</span>)<span class="op">,</span> (<span class="dv">1</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">1</span>)]<span class="op">,</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">&amp;</span>[(<span class="dv">0</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">0</span>)<span class="op">,</span> (<span class="dv">1</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">0</span>)<span class="op">,</span> (<span class="dv">0</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">0</span>)<span class="op">,</span> (<span class="dv">0</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">1</span>)]<span class="op">,</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="op">&amp;</span>[(<span class="dv">0</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">0</span>)<span class="op">,</span> (<span class="dv">1</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">0</span>)<span class="op">,</span> (<span class="dv">0</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">0</span>)<span class="op">,</span> (<span class="dv">0</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">1</span>)]<span class="op">,</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>]<span class="op">;</span></span></code></pre></div>
+<figure class="interactive">
+<div id="viz-pieces" class="canvas-container">
+<canvas id="pieces-canvas">
+</canvas>
+<p><img class="fallback-image" src="../posts/blocker/images/fallback-pieces.png" alt="The 7 Soma cube pieces: an L-shape, T-shape, S-shape, small L, and three 3D corner pieces in red, green, blue, yellow, magenta, cyan, and orange"></p>
+</div>
+</figure>
+<h3 id="piece-orientations">Piece Orientations</h3>
+<p>In order to test each piece’s placement in a particular cell, we need to generate all possible rotations, of which there are 24.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">pub</span> <span class="kw">const</span> ROTATIONS<span class="op">:</span> [<span class="kw">fn</span>(Coord) <span class="op">-&gt;</span> Coord<span class="op">;</span> <span class="dv">24</span>] <span class="op">=</span> [</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">// +z face up, rotate around z axis</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="op">|</span>(x<span class="op">,</span> y<span class="op">,</span> z)<span class="op">|</span> (x<span class="op">,</span> y<span class="op">,</span> z)<span class="op">,</span>      <span class="co">// 0 degrees</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="op">|</span>(x<span class="op">,</span> y<span class="op">,</span> z)<span class="op">|</span> (<span class="op">-</span>y<span class="op">,</span> x<span class="op">,</span> z)<span class="op">,</span>     <span class="co">// 90 degrees</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="op">|</span>(x<span class="op">,</span> y<span class="op">,</span> z)<span class="op">|</span> (<span class="op">-</span>x<span class="op">,</span> <span class="op">-</span>y<span class="op">,</span> z)<span class="op">,</span>    <span class="co">// 180 degrees</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">|</span>(x<span class="op">,</span> y<span class="op">,</span> z)<span class="op">|</span> (y<span class="op">,</span> <span class="op">-</span>x<span class="op">,</span> z)<span class="op">,</span>     <span class="co">// 270 degrees</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="co">// +y face up, rotate around y axis</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="op">|</span>(x<span class="op">,</span> y<span class="op">,</span> z)<span class="op">|</span> (x<span class="op">,</span> <span class="op">-</span>z<span class="op">,</span> y)<span class="op">,</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">|</span>(x<span class="op">,</span> y<span class="op">,</span> z)<span class="op">|</span> (z<span class="op">,</span> x<span class="op">,</span> y)<span class="op">,</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="co">// ... all of the other rotations</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>]<span class="op">;</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="kw">pub</span> <span class="kw">fn</span> all_orientations(piece<span class="op">:</span> <span class="op">&amp;</span>[Coord]) <span class="op">-&gt;</span> <span class="dt">Vec</span><span class="op">&lt;</span><span class="dt">Vec</span><span class="op">&lt;</span>Coord<span class="op">&gt;&gt;</span> <span class="op">{</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> <span class="kw">mut</span> orientations<span class="op">:</span> <span class="dt">Vec</span><span class="op">&lt;</span><span class="dt">Vec</span><span class="op">&lt;</span>Coord<span class="op">&gt;&gt;</span> <span class="op">=</span> ROTATIONS</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span>iter()</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span>map(<span class="op">|</span>rotate<span class="op">|</span> <span class="op">{</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>            <span class="kw">let</span> rotated_coords<span class="op">:</span> <span class="dt">Vec</span><span class="op">&lt;</span>Coord<span class="op">&gt;</span> <span class="op">=</span> piece</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>                <span class="op">.</span>iter()</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>                <span class="op">.</span>map(<span class="op">|&amp;</span>coord<span class="op">|</span> rotate(coord))</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>                <span class="op">.</span>collect()<span class="op">;</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>            normalize_to_origin(rotated_coords)</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span>)</span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span>collect()<span class="op">;</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>    orientations<span class="op">.</span>sort()<span class="op">;</span></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>    orientations<span class="op">.</span>dedup()<span class="op">;</span></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>    orientations</span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<figure class="interactive">
+<div id="viz-rotations" class="canvas-container">
+<canvas id="rotations-canvas">
+</canvas>
+<p><img class="fallback-image" src="../posts/blocker/images/fallback-rotations.png" alt="A single L-shaped piece shown in one of its 24 possible orientations"></p>
+</div>
+<div class="controls">
+<div class="solution-nav">
+<span id="rotation-label">Orientation 1 / 24</span>
+<div class="nav-buttons">
+<button id="prev-rotation" class="nav-btn" aria-label="Previous orientation">
+←
+</button>
+<button id="next-rotation" class="nav-btn" aria-label="Next orientation">
+→
+</button>
+</div>
+</div>
+</div>
+</figure>
+<p>Normalizing a piece to the origin sets us up for sorting and deduplication:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">fn</span> normalize_to_origin(<span class="kw">mut</span> coords<span class="op">:</span> <span class="dt">Vec</span><span class="op">&lt;</span>Coord<span class="op">&gt;</span>) <span class="op">-&gt;</span> <span class="dt">Vec</span><span class="op">&lt;</span>Coord<span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> min_x <span class="op">=</span> coords<span class="op">.</span>iter()<span class="op">.</span>map(<span class="op">|</span>(x<span class="op">,</span> _<span class="op">,</span> _)<span class="op">|</span> <span class="op">*</span>x)<span class="op">.</span>min()<span class="op">.</span>unwrap()<span class="op">;</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> min_y <span class="op">=</span> coords<span class="op">.</span>iter()<span class="op">.</span>map(<span class="op">|</span>(_<span class="op">,</span> y<span class="op">,</span> _)<span class="op">|</span> <span class="op">*</span>y)<span class="op">.</span>min()<span class="op">.</span>unwrap()<span class="op">;</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> min_z <span class="op">=</span> coords<span class="op">.</span>iter()<span class="op">.</span>map(<span class="op">|</span>(_<span class="op">,</span> _<span class="op">,</span> z)<span class="op">|</span> <span class="op">*</span>z)<span class="op">.</span>min()<span class="op">.</span>unwrap()<span class="op">;</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> (x<span class="op">,</span> y<span class="op">,</span> z) <span class="kw">in</span> <span class="op">&amp;</span><span class="kw">mut</span> coords <span class="op">{</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>        <span class="op">*</span>x <span class="op">-=</span> min_x<span class="op">;</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>        <span class="op">*</span>y <span class="op">-=</span> min_y<span class="op">;</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>        <span class="op">*</span>z <span class="op">-=</span> min_z<span class="op">;</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>    coords</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<h3 id="placement-encoding">Placement Encoding</h3>
+<p>In order to easily and efficiently check for collisions and occupancy of cells, we represent coordinates as indices ranging from 0-26.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> coord_to_idx(x<span class="op">:</span> <span class="dt">i32</span><span class="op">,</span> y<span class="op">:</span> <span class="dt">i32</span><span class="op">,</span> z<span class="op">:</span> <span class="dt">i32</span>) <span class="op">-&gt;</span> <span class="dt">usize</span> <span class="op">{</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    (x <span class="op">*</span> <span class="dv">9</span> <span class="op">+</span> y <span class="op">*</span> <span class="dv">3</span> <span class="op">+</span> z) <span class="kw">as</span> <span class="dt">usize</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> idx_to_coord(cell_index<span class="op">:</span> <span class="dt">usize</span>) <span class="op">-&gt;</span> Coord <span class="op">{</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    (</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>        (cell_index <span class="op">/</span> <span class="dv">9</span>) <span class="kw">as</span> <span class="dt">i32</span><span class="op">,</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>        ((cell_index <span class="op">/</span> <span class="dv">3</span>) <span class="op">%</span> <span class="dv">3</span>) <span class="kw">as</span> <span class="dt">i32</span><span class="op">,</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>        (cell_index <span class="op">%</span> <span class="dv">3</span>) <span class="kw">as</span> <span class="dt">i32</span><span class="op">,</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>This lets us use a bitmask in order to tell if a cell is occupied. For example, a small L piece with an occupied position of <code>[(0, 0, 0), (1, 0, 0), (0, 1, 0)]</code> would have a bitmask of <code>0b1000001001</code>. If we try to place another piece that would occupy the <code>(0,0,0)</code> cell, <code>coordinates1 &amp; coordinates2</code> would return a bitmask that is non-zero and indicate a collision.</p>
+<p>Now we can represent a placement as a struct with the bitmask encoding of position, a coordinate representation of the piece to construct final solutions, and a count of the number of cubes to bound the iteration on the cube positions:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co">/// a piece orientation: cube positions after rotation and normalization</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> Orientation <span class="op">=</span> <span class="dt">Vec</span><span class="op">&lt;</span>Coord<span class="op">&gt;;</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co">/// all valid placements for one piece at a specific target cell</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> CellPlacements <span class="op">=</span> <span class="dt">Vec</span><span class="op">&lt;</span>Placement<span class="op">&gt;;</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co">/// lookup table indexed by `[piece_index][cell_index]`</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> PlacementTable <span class="op">=</span> <span class="dt">Vec</span><span class="op">&lt;</span><span class="dt">Vec</span><span class="op">&lt;</span>CellPlacements<span class="op">&gt;&gt;;</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Placement <span class="op">{</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    <span class="co">/// bitmask where bit `i` is set if cell `i` is occupied by this placement</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    occupied_mask<span class="op">:</span> <span class="dt">u32</span><span class="op">,</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    <span class="co">/// absolute coordinates of each cube in the grid</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>    cube_positions<span class="op">:</span> [Coord<span class="op">;</span> MAX_CUBES_PER_PIECE]<span class="op">,</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>    <span class="co">/// number of cubes in this piece (3 or 4)</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>    cube_count<span class="op">:</span> <span class="dt">u8</span><span class="op">,</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<h3 id="precomputing-valid-placements">Precomputing Valid Placements</h3>
+<p>With this, we can now check and construct partial solutions. <code>try_create_placement</code> takes a piece in a particular <code>orientation</code> (normalized) and tries to place its <code>anchor</code> point at a <code>target</code> location. An anchor is simply one of the cubes a particular piece is comprised of. Placing a piece in a target cell relative to some anchor means that the anchor cube is meant to be placed in that target cell. To see if a piece can be placed at the target relative to its anchor, it calculates each cube’s absolute position, makes sure no component is out of bounds and, if in bounds, returns that placement containing its collision bitmask.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">fn</span> try_create_placement(</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    orientation<span class="op">:</span> <span class="op">&amp;</span>Orientation<span class="op">,</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    target<span class="op">:</span> Coord<span class="op">,</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    anchor<span class="op">:</span> Coord<span class="op">,</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>) <span class="op">-&gt;</span> <span class="dt">Option</span><span class="op">&lt;</span>Placement<span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> <span class="kw">mut</span> occupied_mask <span class="op">=</span> <span class="dv">0u32</span><span class="op">;</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> <span class="kw">mut</span> cube_positions <span class="op">=</span> [(<span class="dv">0</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">0</span>)<span class="op">;</span> MAX_CUBES_PER_PIECE]<span class="op">;</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> offset <span class="op">=</span> (</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>        target<span class="op">.</span><span class="dv">0</span> <span class="op">-</span> anchor<span class="op">.</span><span class="dv">0</span><span class="op">,</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>        target<span class="op">.</span><span class="dv">1</span> <span class="op">-</span> anchor<span class="op">.</span><span class="dv">1</span><span class="op">,</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>        target<span class="op">.</span><span class="dv">2</span> <span class="op">-</span> anchor<span class="op">.</span><span class="dv">2</span><span class="op">,</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>    )<span class="op">;</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> (cube_index<span class="op">,</span> <span class="op">&amp;</span>(piece_x<span class="op">,</span> piece_y<span class="op">,</span> piece_z)) <span class="kw">in</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>        orientation<span class="op">.</span>iter()<span class="op">.</span>enumerate()</span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>        <span class="kw">let</span> absolute_x <span class="op">=</span> piece_x <span class="op">+</span> offset<span class="op">.</span><span class="dv">0</span><span class="op">;</span></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>        <span class="kw">let</span> absolute_y <span class="op">=</span> piece_y <span class="op">+</span> offset<span class="op">.</span><span class="dv">1</span><span class="op">;</span></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>        <span class="kw">let</span> absolute_z <span class="op">=</span> piece_z <span class="op">+</span> offset<span class="op">.</span><span class="dv">2</span><span class="op">;</span></span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>        <span class="co">// check if this cube is within the 3x3x3 grid bounds</span></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">!</span>(<span class="dv">0</span><span class="op">..</span><span class="dv">3</span>)<span class="op">.</span>contains(<span class="op">&amp;</span>absolute_x)</span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>            <span class="op">||</span> <span class="op">!</span>(<span class="dv">0</span><span class="op">..</span><span class="dv">3</span>)<span class="op">.</span>contains(<span class="op">&amp;</span>absolute_y)</span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>            <span class="op">||</span> <span class="op">!</span>(<span class="dv">0</span><span class="op">..</span><span class="dv">3</span>)<span class="op">.</span>contains(<span class="op">&amp;</span>absolute_z)</span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="cn">None</span><span class="op">;</span></span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a>        <span class="kw">let</span> idx <span class="op">=</span> coord_to_idx(absolute_x<span class="op">,</span> absolute_y<span class="op">,</span> absolute_z)<span class="op">;</span></span>
+<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a>        occupied_mask <span class="op">|=</span> <span class="dv">1</span> <span class="op">&lt;&lt;</span> idx<span class="op">;</span></span>
+<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a>        cube_positions[cube_index] <span class="op">=</span> (absolute_x<span class="op">,</span> absolute_y<span class="op">,</span> absolute_z)<span class="op">;</span></span>
+<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-34"><a href="#cb6-34" aria-hidden="true" tabindex="-1"></a>    <span class="cn">Some</span>(Placement <span class="op">{</span></span>
+<span id="cb6-35"><a href="#cb6-35" aria-hidden="true" tabindex="-1"></a>        occupied_mask<span class="op">,</span></span>
+<span id="cb6-36"><a href="#cb6-36" aria-hidden="true" tabindex="-1"></a>        cube_positions<span class="op">,</span></span>
+<span id="cb6-37"><a href="#cb6-37" aria-hidden="true" tabindex="-1"></a>        cube_count<span class="op">:</span> orientation<span class="op">.</span>len() <span class="kw">as</span> <span class="dt">u8</span><span class="op">,</span></span>
+<span id="cb6-38"><a href="#cb6-38" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span>)</span>
+<span id="cb6-39"><a href="#cb6-39" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p><code>try_create_placement</code> is called for all pieces in all orientations to generate a table of placements in <code>build_placement_table</code>. The purpose of <code>build_placement_table</code> is simply to generate an account of all valid ways you can place each piece within the 3x3x3 grid by itself without going out of bounds, i.e. without considering any collisions. To do so, it iterates over all orientations and placements for each possible piece, anchor point, and target cell.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">fn</span> build_placement_table(pieces<span class="op">:</span> <span class="op">&amp;</span>[<span class="op">&amp;</span>[Coord]]) <span class="op">-&gt;</span> PlacementTable <span class="op">{</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> piece_orientations<span class="op">:</span> <span class="dt">Vec</span><span class="op">&lt;</span><span class="dt">Vec</span><span class="op">&lt;</span>Orientation<span class="op">&gt;&gt;</span> <span class="op">=</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>        pieces<span class="op">.</span>iter()<span class="op">.</span>map(<span class="op">|</span>piece<span class="op">|</span> all_orientations(piece))<span class="op">.</span>collect()<span class="op">;</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    piece_orientations</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span>iter()</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span>map(<span class="op">|</span>orientations<span class="op">|</span> <span class="op">{</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>            (<span class="dv">0</span><span class="op">..</span>GRID_SIZE)</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>                <span class="op">.</span>map(<span class="op">|</span>target_cell<span class="op">|</span> <span class="op">{</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>                    <span class="kw">let</span> target_position <span class="op">=</span> idx_to_coord(target_cell)<span class="op">;</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>                    <span class="kw">let</span> <span class="kw">mut</span> placements <span class="op">=</span> <span class="dt">Vec</span><span class="pp">::</span>new()<span class="op">;</span></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">for</span> orientation <span class="kw">in</span> orientations <span class="op">{</span></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>                        <span class="cf">for</span> <span class="op">&amp;</span>anchor <span class="kw">in</span> orientation <span class="op">{</span></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>                            <span class="cf">if</span> <span class="kw">let</span> <span class="cn">Some</span>(placement) <span class="op">=</span></span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>                                try_create_placement(orientation<span class="op">,</span> target_position<span class="op">,</span> anchor)</span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>                            <span class="op">{</span></span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>                                placements<span class="op">.</span>push(placement)<span class="op">;</span></span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>                            <span class="op">}</span></span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>                        <span class="op">}</span></span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>                    <span class="op">}</span></span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a>                    placements</span>
+<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a>                <span class="op">}</span>)</span>
+<span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a>                <span class="op">.</span>collect()</span>
+<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span>)</span>
+<span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span>collect()</span>
+<span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<h2 id="the-search">The Search</h2>
+<p>Now that we have a table that can iterate over all valid placements, we can conduct the search. As mentioned earlier, this is going to take the form of a backtracking / depth-first-search algortihm which will attempt to advance the search for a valid solution and, if we are unable to advance, rewind the stack to the last decision point (piece/orientation) and try another path.</p>
+<figure class="interactive">
+<div id="viz-backtrack" class="canvas-container canvas-container--small">
+<canvas id="backtrack-canvas">
+</canvas>
+<p><img class="fallback-image" src="../posts/blocker/images/fallback-backtrack.png" alt="A partially assembled Soma cube showing a search in progress"></p>
+</div>
+<div class="controls">
+<p><input type="range" id="backtrack-slider" min="0" max="100" value="0"></p>
+</div>
+</figure>
+<h3 id="search-setup">Search Setup</h3>
+<p>First is the setup:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> placement_table <span class="op">=</span> build_placement_table(pieces)<span class="op">;</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> num_pieces <span class="op">=</span> pieces<span class="op">.</span>len()<span class="op">;</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> <span class="kw">mut</span> solutions <span class="op">=</span> <span class="dt">Vec</span><span class="pp">::</span>new()<span class="op">;</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> <span class="kw">mut</span> seen_states<span class="op">:</span> FxHashSet<span class="op">&lt;</span>GridKey<span class="op">&gt;</span> <span class="op">=</span> <span class="pp">FxHashSet::</span><span class="kw">default</span>()<span class="op">;</span></span></code></pre></div>
+<p><code>seen_states</code> lets us avoid traversing down symmetric search branches (solutions can be symmetric by rotation and reflection), which would overcount and slow down the search.</p>
+<p>To keep track of our search, we’ll maintain a stack with a snapshot of the partial solution:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> PartialSolution <span class="op">{</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">// pieces placed so far in this search path</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    placed_pieces<span class="op">:</span> [PlacedPiece<span class="op">;</span> MAX_PIECES]<span class="op">,</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">// number of pieces placed</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    placed_count<span class="op">:</span> <span class="dt">usize</span><span class="op">,</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    <span class="co">// bitmask of available pieces</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>    remaining_pieces<span class="op">:</span> <span class="dt">u8</span><span class="op">,</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>    <span class="co">// bitmask of filled cells</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>    occupied_cells<span class="op">:</span> <span class="dt">u32</span><span class="op">,</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>    <span class="co">// which piece we're trying</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>    current_piece_idx<span class="op">:</span> <span class="dt">usize</span><span class="op">,</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>    <span class="co">// which orientation we're on</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>    current_orientation_index<span class="op">:</span> <span class="dt">usize</span><span class="op">,</span></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>The search begins by pushing an initial partial solution onto the stack:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> initial_remaining <span class="op">=</span> (<span class="dv">1u8</span> <span class="op">&lt;&lt;</span> num_pieces) <span class="op">-</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> empty_piece<span class="op">:</span> PlacedPiece <span class="op">=</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    (<span class="dv">0</span><span class="op">,</span> [(<span class="dv">0</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">0</span>)<span class="op">;</span> MAX_CUBES_PER_PIECE]<span class="op">,</span> <span class="dv">0</span>)<span class="op">;</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> <span class="kw">mut</span> search_stack <span class="op">=</span> <span class="pp">vec!</span>[PartialSolution <span class="op">{</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    placed_pieces<span class="op">:</span> [empty_piece<span class="op">;</span> MAX_PIECES]<span class="op">,</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    placed_count<span class="op">:</span> <span class="dv">0</span><span class="op">,</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>    remaining_pieces<span class="op">:</span> initial_remaining<span class="op">,</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>    occupied_cells<span class="op">:</span> <span class="dv">0</span><span class="op">,</span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>    current_piece_idx<span class="op">:</span> <span class="dv">0</span><span class="op">,</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>    current_orientation_index<span class="op">:</span> <span class="dv">0</span><span class="op">,</span></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a><span class="op">}</span>]<span class="op">;</span></span></code></pre></div>
+<h3 id="finding-empty-cells">Finding Empty Cells</h3>
+<p>The search starts by popping the next partial solution from the stack and tries to extend it by placing a piece in the first available location. If there are no more empty cells, that means we found a valid solution:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="kw">let</span> <span class="cn">Some</span>(<span class="kw">mut</span> partial) <span class="op">=</span> search_stack<span class="op">.</span>pop() <span class="op">{</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> target_cell <span class="op">=</span> <span class="cf">match</span> find_first_empty_cell(partial<span class="op">.</span>occupied_cells) <span class="op">{</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>        <span class="cn">Some</span>(cell) <span class="op">=&gt;</span> cell<span class="op">,</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>        <span class="cn">None</span> <span class="op">=&gt;</span> <span class="op">{</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>            <span class="kw">let</span> solution <span class="op">=</span> partial<span class="op">.</span>placed_pieces</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>                [<span class="op">..</span>partial<span class="op">.</span>placed_count]<span class="op">.</span>to_vec()<span class="op">;</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>            solutions<span class="op">.</span>push(solution)<span class="op">;</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>            <span class="cf">continue</span><span class="op">;</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>    <span class="op">};</span></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>    <span class="co">// ...</span></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<h3 id="trying-pieces">Trying Pieces</h3>
+<p>Next is to try placing each remaining piece at that target cell, using the
+placement table:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="ot">'pieces</span><span class="op">:</span> <span class="cf">loop</span> <span class="op">{</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">// find the next available piece, starting from current_piece_idx</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> <span class="cn">Some</span>(piece_index) <span class="op">=</span> (partial<span class="op">.</span>current_piece_idx<span class="op">..</span>num_pieces)</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span>find(<span class="op">|&amp;</span>i<span class="op">|</span> (partial<span class="op">.</span>remaining_pieces <span class="op">&amp;</span> (<span class="dv">1</span> <span class="op">&lt;&lt;</span> i)) <span class="op">!=</span> <span class="dv">0</span>)</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span> <span class="op">{</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>        <span class="cf">break</span> <span class="ot">'pieces</span><span class="op">;</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">};</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>    partial<span class="op">.</span>current_piece_idx <span class="op">=</span> piece_index<span class="op">;</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> valid_placements <span class="op">=</span> <span class="op">&amp;</span>placement_table[piece_index][target_cell]<span class="op">;</span></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>    <span class="co">// ...</span></span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<h3 id="collision-detection">Collision Detection</h3>
+<p>For each piece, the valid placement table gives us all of the orientations that piece can be placed in the target cell. For each of those orientations, we run a collision check using the bitmask to quickly know if we can continue adding pieces or must backtrack:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co">// try each orientation of this piece at the target cell</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> partial<span class="op">.</span>current_orientation_index <span class="op">&lt;</span> valid_placements<span class="op">.</span>len() <span class="op">{</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> placement <span class="op">=</span> <span class="op">&amp;</span>valid_placements[partial<span class="op">.</span>current_orientation_index]<span class="op">;</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    partial<span class="op">.</span>current_orientation_index <span class="op">+=</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    <span class="co">// fast collision check using bitmask AND</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (partial<span class="op">.</span>occupied_cells <span class="op">&amp;</span> placement<span class="op">.</span>occupied_mask) <span class="op">!=</span> <span class="dv">0</span> <span class="op">{</span></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">continue</span><span class="op">;</span></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span></code></pre></div>
+<h3 id="advancing-the-search">Advancing the Search</h3>
+<p>If there is no collision, we can push the updated state of the search onto the stack:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> new_occupied <span class="op">=</span> partial<span class="op">.</span>occupied_cells <span class="op">|</span> placement<span class="op">.</span>occupied_mask<span class="op">;</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> new_piece<span class="op">:</span> PlacedPiece <span class="op">=</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    (piece_index<span class="op">,</span> placement<span class="op">.</span>cube_positions<span class="op">,</span> placement<span class="op">.</span>cube_count)<span class="op">;</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> <span class="kw">mut</span> new_placed <span class="op">=</span> partial<span class="op">.</span>placed_pieces<span class="op">;</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>new_placed[partial<span class="op">.</span>placed_count] <span class="op">=</span> new_piece<span class="op">;</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> new_count <span class="op">=</span> partial<span class="op">.</span>placed_count <span class="op">+</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a><span class="co">// skip if we've seen this state under any rotation or reflection</span></span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> canonical <span class="op">=</span> canonical_key(<span class="op">&amp;</span>new_placed[<span class="op">..</span>new_count])<span class="op">;</span></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> seen_states<span class="op">.</span>contains(<span class="op">&amp;</span>canonical) <span class="op">{</span></span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">continue</span><span class="op">;</span></span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>seen_states<span class="op">.</span>insert(canonical)<span class="op">;</span></span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a><span class="co">// remove the placed piece from remaining (flip bit off)</span></span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> new_remaining <span class="op">=</span> partial<span class="op">.</span>remaining_pieces <span class="op">&amp;</span> <span class="op">!</span>(<span class="dv">1</span> <span class="op">&lt;&lt;</span> piece_index)<span class="op">;</span></span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a><span class="co">// save current partial solution for backtracking, then push new state</span></span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>search_stack<span class="op">.</span>push(partial)<span class="op">;</span></span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>search_stack<span class="op">.</span>push(PartialSolution <span class="op">{</span></span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>    placed_pieces<span class="op">:</span> new_placed<span class="op">,</span></span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>    placed_count<span class="op">:</span> new_count<span class="op">,</span></span>
+<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>    remaining_pieces<span class="op">:</span> new_remaining<span class="op">,</span></span>
+<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a>    occupied_cells<span class="op">:</span> new_occupied<span class="op">,</span></span>
+<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a>    current_piece_idx<span class="op">:</span> <span class="dv">0</span><span class="op">,</span></span>
+<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a>    current_orientation_index<span class="op">:</span> <span class="dv">0</span><span class="op">,</span></span>
+<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a><span class="op">}</span>)<span class="op">;</span></span>
+<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-30"><a href="#cb14-30" aria-hidden="true" tabindex="-1"></a><span class="co">// placed a piece successfully, explore this branch</span></span>
+<span id="cb14-31"><a href="#cb14-31" aria-hidden="true" tabindex="-1"></a><span class="cf">break</span> <span class="ot">'pieces</span><span class="op">;</span></span></code></pre></div>
+<h3 id="eliminating-duplicate-solutions">Eliminating Duplicate Solutions</h3>
+<p>You may have noticed the check for partial solutions already explored. There are many possible rotational equivalents (24x) and chiral equivalents (2x) that we can encounter in the search, so <code>canonical_key</code> finds a stable representative of all rotational and chiral equivalent solutions in order to break early and avoid duplicating work:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">pub</span> <span class="kw">fn</span> canonical_key(solution<span class="op">:</span> <span class="op">&amp;</span>[PlacedPiece]) <span class="op">-&gt;</span> GridKey <span class="op">{</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> grid_key <span class="op">=</span> grid_to_key(<span class="op">&amp;</span>solution_to_grid(solution))<span class="op">;</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    find_smallest_rotation_with_reflection(<span class="op">&amp;</span>grid_key)</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>All this does is create a grid representation of the solution and then construct the lexicographically-smallest representation of that grid, which gives us a stable key by which to compare partial solutions.</p>
+<figure class="interactive">
+<div id="viz-canonical" class="canvas-container">
+<canvas id="canonical-canvas">
+</canvas>
+<p><img class="fallback-image" src="../posts/blocker/images/fallback-canonical.png" alt="Two Soma cube solutions side by side, showing a solution and its mirror image which are considered equivalent"></p>
+</div>
+<div class="controls">
+<p><label>Rotation <input type="range" id="canonical-slider" min="0" max="23" value="0"> <span id="canonical-label">1 / 24</span></label></p>
+</div>
+<figcaption>
+A solution and its mirror image, considered symmetric.
+</figcaption>
+</figure>
+<p>With this, we now have the final result, which is 240 asymmetric solutions. On my macbook air, the search for all solutions takes ~80ms. You can view all of the code from this blog post <a href="https://github.com/oinoom/blocker">here</a>.</p>
+<figure class="interactive">
+<div id="viz-solution" class="canvas-container">
+<canvas id="solution-canvas">
+</canvas>
+<p><img class="fallback-image" src="../posts/blocker/images/fallback-solution.png" alt="A complete Soma cube solution with pieces slightly exploded to show how they fit together"></p>
+</div>
+<div class="controls">
+<input type="range" id="solution-explode" class="mouse-only" min="0" max="100" value="0">
+<div class="solution-nav">
+<span id="solution-label">Solution 1 of 240</span>
+<div class="nav-buttons">
+<button id="prev-solution" class="nav-btn" aria-label="Previous solution">
+←
+</button>
+<button id="next-solution" class="nav-btn" aria-label="Next solution">
+→
+</button>
+</div>
+</div>
+</div>
+</figure>
+<h2 id="afterword">Afterword</h2>
+<p>Wondering what other fun things I could do and visualize and animate. I wondered about generalizing the solver with the Bedlam cube as the next candidate. The <a href="https://en.wikipedia.org/wiki/Bedlam_cube">Bedlam</a> cube is another polycube (twelve pentacubes and one tetracube), with 4x4x4 dimensions and 19,186 solutions, making for a much more complicated puzzle. To support this involved combing through all of the portions of the code that hardcoded anything related to Soma and parameterizing it by things like max piece size, number of pieces, cube dimensions, etc. With that, the solver is now generic for cubic dissection puzzles; you can find the updates to the solver in the repo <a href="https://github.com/oinoom/blocker/commit/3ff5684e2698bc5fd3fe367fbb244f636be967fc">here</a>.</p>
+<figure class="interactive">
+<div id="viz-bedlam-pieces" class="canvas-container">
+<canvas id="bedlam-pieces-canvas">
+</canvas>
+<p><img class="fallback-image" src="../posts/blocker/images/fallback-bedlam.png" alt="A 4x4x4 Bedlam cube assembled from 13 colorful polycube pieces"></p>
+</div>
+</figure>
+<h2 id="further-reading">Further Reading</h2>
+<p>When writing this blog post, I actually had no idea the puzzle on my desk was called a Soma cube. After finding out and doing some digging I found this wonderful <a href="https://www.aswinvanwoudenberg.com/posts/soma-cube/">blog post</a> by Aswin van Woudenberg explaining a similar approach in Python. I’m only slightly sad I didn’t think of this first. His blog is full of programmatic puzzle solutions and I encourage you to check it out! And after implementing the generic solver, I found even more resources on this topic, which really does seem beaten to death by this point. There is another <a href="https://www.mattbusche.org/blog/article/polycube/">incredibly detailed post</a> by Matt Busche, where he shares several approaches and optimization techniques to solving these puzzles, including the ones I took: hole-filling backtracking coupled with bitfields and rotational symmetry pruning. On top of that, this polycube solving problem (another term I hadn’t known) can be modeled as an exact cover problem (<a href="http://arxiv.org/abs/cs/0011047">thanks Donald Knuth!</a>).</p>
+<script src="../posts/blocker/js/base.js"></script>
+<script src="../posts/blocker/js/solutions-data.js"></script>
+<script src="../posts/blocker/js/blocker.js"></script>
+<script src="../posts/blocker/js/bedlam-solutions-data.js"></script>
+<script src="../posts/blocker/js/bedlam.js"></script>
+    </section>
+</article>
+
+    </main>
+    <div id="footer">
+        <small><a href="../rss.xml">RSS</a></small>
+        <small><a href="../atom.xml">Atom</a></small>
+        <small>&copy; Copyright 2026, David Anekstein</small>
+    </div>
+
+    <script>
+        const menuToggle = document.getElementById('menu-toggle');
+        const navigation = document.getElementById('navigation');
+        
+        menuToggle.addEventListener('click', function() {
+            navigation.classList.toggle('open');
+            menuToggle.classList.toggle('open');
+        });
+    </script>
+</body>
+
+</html>

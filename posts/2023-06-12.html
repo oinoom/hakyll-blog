@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>To Be Determined - Exploring Dataflow Analysis in the Rust Compiler 
+</title>
+    <link rel="stylesheet" href="../css/default.css" />
+    <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="alternate" type="application/rss+xml" title="David Anekstein's blog - To Be Determined" href="./rss.xml">
+    <link rel="alternate" type="application/atom+xml" title="David Anekstein's blog - To Be Determined" href="./atom.xml">
+</head>
+
+<body>
+    <div id="header">
+        <div id="logo">
+            <a href="../">To Be Determined</a>
+        </div>
+        <button id="menu-toggle" aria-label="Toggle navigation">☰</button>
+        <div id="navigation">
+            <a href="../posts.html">Posts</a>
+            <a href="../projects.html">Projects</a>
+            <a href="../publications.html">Publications</a>
+            <a href="../about.html">About</a>
+        </div>
+    </div>
+
+    <main role="main">
+        <article>
+    <section class="header">
+        <h1>Exploring Dataflow Analysis in the Rust Compiler 
+</h1>
+        <div class="info">
+            Posted on June 12, 2023
+            
+        </div>
+    </section>
+    <section>
+        <p>Recently I’ve been working in static analysis land and as a part of that have been familiarizing myself with data flow analysis. I look at a fair amount of MIR and so decided to delve into the <code>rustc_mir_dataflow</code> crate to see how these things are handled in the rust compiler. There is a helpful introduction to this topic in the <a href="https://rustc-dev-guide.rust-lang.org/mir/dataflow.html"><code>rustc dev guide</code></a>, and this post fleshes things out a bit.</p>
+<h2 id="dataflow-analysis">Dataflow Analysis</h2>
+<p>Briefly, dataflow analysis helps one understand the way data flows throughout a program. There are intraprocedural and interprocedural approaches. Some types of applications dataflow analysis include:</p>
+<ol type="1">
+<li>constant propagation / folding: for constant variables, replacing uses of those variables, and expressions containing those variables, with constants</li>
+<li>live variable analysis: determining when a variable may be used in the future – useful for identifying dead code</li>
+<li>available expression analysis: determining which sets of expressions need not be recomputed</li>
+<li>reaching analysis: determining which definitions may reach a given point</li>
+</ol>
+<p>Dataflow analysis is commonly performed on a control flow graph (CFG). Rust’s MIR representation is basically a control flow graph structure, and so <code>rustc_mir_dataflow</code> employs common analysis algorithms to determine some of your program’s properties.</p>
+<p>Dataflow analysis on CFG’s is usually performed using fixed point iteration:</p>
+<ol type="1">
+<li>initialize some start state associated with the entry point of the CFG</li>
+<li>for each node in the CFG, compute an input state using a <code>meet</code> (or <code>join</code>) function to combine incoming states from predecessor nodes and computing an output state using a <code>transfer</code> function, applied to the input state</li>
+<li>once all states of all nodes are unchanged (a fixed point has been reached), terminate</li>
+</ol>
+<p>Once iteration has terminated, now you have a mapping from each node to its input and output states (also called facts) describing the analysis results at each point in the program.</p>
+<p>Some examples of states:</p>
+<ol type="1">
+<li>which variables are live?</li>
+<li>which expressions are available and precomputed?</li>
+<li>what definitions have established, constant values?</li>
+</ol>
+<p>Some dataflow analysis problems lend themselves to efficient transfer function representations, and a technique called gen-kill analysis may be utilized in these cases.</p>
+<p>Whereas before input and output were defined with:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>input <span class="op">=</span> meet([facts[predecessor] <span class="cf">for</span> predecessor <span class="kw">in</span> node<span class="op">.</span>preds])</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>output <span class="op">=</span> transfer(input)</span></code></pre></div>
+<p>Gen-kill problems define input and output as:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>input <span class="op">=</span> <span class="kw">union</span>(facts[predecessor] <span class="cf">for</span> predecessor <span class="kw">in</span> node<span class="op">.</span>preds)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>output <span class="op">=</span> <span class="kw">union</span>((input <span class="op">-</span> kill[current_node])<span class="op">,</span> gen[current_node])</span></code></pre></div>
+<p>where <code>kill</code> and <code>gen</code> map to the portions of state that are removed and added at a particular point in the flow. For example, in live variable analysis <code>gen[statement]</code> would describe the set of variables that are used at <code>statement</code> and <code>kill[statement]</code> would describe the set of variables defined at <code>statement</code>.</p>
+<p>Let’s take a look at what is perhaps the simplest instance of a gen-kill analysis in the rust compiler – determining <a href="https://github.com/rust-lang/rust/blob/df77afbcaf3365a32066a8ca4a00ae6fc9a69647/compiler/rustc_mir_dataflow/src/impls/storage_liveness.rs#L83"><code>MaybeStorageDead</code></a>. <a href="https://doc.rust-lang.org/nightly/nightly-rustc/rustc_middle/mir/enum.StatementKind.html#variant.StorageLive"><code>StorageDead</code></a> describes when a variable can have its memory freed. Knowing when a variable is dead is important for the compiler to know so that it may avoid using memory that is unallocated.</p>
+<p>First, <code>MaybeStorageDead</code> keeps track of the variables that are always live; this includes the return value of a function and all of its arguments:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>derive<span class="at">(</span><span class="bu">Clone</span><span class="at">)]</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="kw">pub</span> <span class="kw">struct</span> MaybeStorageDead <span class="op">{</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>	always_live_locals<span class="op">:</span> BitSet<span class="op">&lt;</span>Local<span class="op">&gt;,</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="kw">impl</span> MaybeStorageDead <span class="op">{</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>	<span class="kw">pub</span> <span class="kw">fn</span> new(always_live_locals<span class="op">:</span> BitSet<span class="op">&lt;</span>Local<span class="op">&gt;</span>) <span class="op">-&gt;</span> <span class="dt">Self</span> <span class="op">{</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>		MaybeStorageDead <span class="op">{</span> always_live_locals <span class="op">}</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>	<span class="op">}</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>A <code>BitSet</code> is used as it is a space-efficient and performant representation of the state (or domain) of the analysis problem. Bit sets and bit vectors are common ways to represent the domain in gen-kill analysis problems.</p>
+<p>Next, <code>MaybeStorageDead</code> implements the <a href="https://github.com/rust-lang/rust/blob/df77afbcaf3365a32066a8ca4a00ae6fc9a69647/compiler/rustc_mir_dataflow/src/framework/mod.rs#L103"><code>AnalysisDomain</code></a> trait, which defines what the starting state value is for the analysis problem. In this case, it’s an empty bit set (all zeros) where each bit represents one of the locals in the MIR body. The trait also requires one to define mutations to the state upon entry to the starting block. This flips the bits representing every non-argument and non-return value to 1 – they’re presumed-dead by default:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">impl</span><span class="op">&lt;</span><span class="ot">'tcx</span><span class="op">&gt;</span> <span class="kw">crate</span><span class="pp">::</span>AnalysisDomain<span class="op">&lt;</span><span class="ot">'tcx</span><span class="op">&gt;</span> <span class="cf">for</span> MaybeStorageDead <span class="op">{</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>	<span class="kw">type</span> Domain <span class="op">=</span> BitSet<span class="op">&lt;</span>Local<span class="op">&gt;;</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>	<span class="kw">const</span> NAME<span class="op">:</span> <span class="op">&amp;</span><span class="ot">'static</span> <span class="dt">str</span> <span class="op">=</span> <span class="st">&quot;maybe_storage_dead&quot;</span><span class="op">;</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>	<span class="kw">fn</span> bottom_value(<span class="op">&amp;</span><span class="kw">self</span><span class="op">,</span> body<span class="op">:</span> <span class="op">&amp;</span><span class="pp">mir::</span>Body<span class="op">&lt;</span><span class="ot">'tcx</span><span class="op">&gt;</span>) <span class="op">-&gt;</span> <span class="dt">Self</span><span class="pp">::</span>Domain <span class="op">{</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>		<span class="co">// bottom = live</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>		<span class="pp">BitSet::</span>new_empty(body<span class="op">.</span>local_decls<span class="op">.</span>len())</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>	<span class="op">}</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>	<span class="kw">fn</span> initialize_start_block(</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>        <span class="op">&amp;</span><span class="kw">self</span><span class="op">,</span> body<span class="op">:</span> <span class="op">&amp;</span><span class="pp">mir::</span>Body<span class="op">&lt;</span><span class="ot">'tcx</span><span class="op">&gt;,</span> on_entry<span class="op">:</span> <span class="op">&amp;</span><span class="kw">mut</span> <span class="dt">Self</span><span class="pp">::</span>Domain) <span class="op">{</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>		<span class="pp">assert_eq!</span>(</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>            body<span class="op">.</span>local_decls<span class="op">.</span>len()<span class="op">,</span> </span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>            <span class="kw">self</span><span class="op">.</span>always_live_locals<span class="op">.</span>domain_size()</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>        )<span class="op">;</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>		<span class="co">// Do not iterate on return place and args,</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>                <span class="co">// as they are trivially always live.</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>		<span class="cf">for</span> local <span class="kw">in</span> body<span class="op">.</span>vars_and_temps_iter() <span class="op">{</span></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>			<span class="cf">if</span> <span class="op">!</span><span class="kw">self</span><span class="op">.</span>always_live_locals<span class="op">.</span>contains(local) <span class="op">{</span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>				on_entry<span class="op">.</span>insert(local)<span class="op">;</span></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>			<span class="op">}</span></span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>		<span class="op">}</span></span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>	<span class="op">}</span></span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Next, it’s time to implement the necessary functions for the <a href="https://github.com/rust-lang/rust/blob/df77afbcaf3365a32066a8ca4a00ae6fc9a69647/compiler/rustc_mir_dataflow/src/framework/mod.rs#L295"><code>GenKillAnalysis</code></a> trait. This involves defining the effects of particular statements, terminators, and calls. Some of these methods have default implementations.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">impl</span><span class="op">&lt;</span><span class="ot">'tcx</span><span class="op">&gt;</span> <span class="kw">crate</span><span class="pp">::</span>GenKillAnalysis<span class="op">&lt;</span><span class="ot">'tcx</span><span class="op">&gt;</span> <span class="cf">for</span> MaybeStorageDead <span class="op">{</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">type</span> Idx <span class="op">=</span> Local<span class="op">;</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">fn</span> statement_effect(</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>        <span class="op">&amp;</span><span class="kw">self</span><span class="op">,</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>        trans<span class="op">:</span> <span class="op">&amp;</span><span class="kw">mut</span> <span class="kw">impl</span> GenKill<span class="op">&lt;</span><span class="dt">Self</span><span class="pp">::</span>Idx<span class="op">&gt;,</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>        stmt<span class="op">:</span> <span class="op">&amp;</span><span class="pp">mir::</span>Statement<span class="op">&lt;</span><span class="ot">'tcx</span><span class="op">&gt;,</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>        _<span class="op">:</span> Location<span class="op">,</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    ) <span class="op">{</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>        <span class="cf">match</span> stmt<span class="op">.</span>kind <span class="op">{</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>            <span class="pp">StatementKind::</span>StorageLive(l) <span class="op">=&gt;</span> trans<span class="op">.</span>kill(l)<span class="op">,</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>            <span class="pp">StatementKind::</span>StorageDead(l) <span class="op">=&gt;</span> trans<span class="op">.</span>gen(l)<span class="op">,</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>            _ <span class="op">=&gt;</span> ()<span class="op">,</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>    <span class="kw">fn</span> terminator_effect(</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>        <span class="op">&amp;</span><span class="kw">self</span><span class="op">,</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>        _trans<span class="op">:</span> <span class="op">&amp;</span><span class="kw">mut</span> <span class="kw">impl</span> GenKill<span class="op">&lt;</span><span class="dt">Self</span><span class="pp">::</span>Idx<span class="op">&gt;,</span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>        _<span class="op">:</span> <span class="op">&amp;</span><span class="pp">mir::</span>Terminator<span class="op">&lt;</span><span class="ot">'tcx</span><span class="op">&gt;,</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>        _<span class="op">:</span> Location<span class="op">,</span></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>    ) <span class="op">{</span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Terminators have no effect</span></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>    <span class="kw">fn</span> call_return_effect(</span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>        <span class="op">&amp;</span><span class="kw">self</span><span class="op">,</span></span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>        _trans<span class="op">:</span> <span class="op">&amp;</span><span class="kw">mut</span> <span class="kw">impl</span> GenKill<span class="op">&lt;</span><span class="dt">Self</span><span class="pp">::</span>Idx<span class="op">&gt;,</span></span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>        _block<span class="op">:</span> BasicBlock<span class="op">,</span></span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>        _return_places<span class="op">:</span> CallReturnPlaces<span class="op">&lt;</span><span class="ot">'_</span><span class="op">,</span> <span class="ot">'tcx</span><span class="op">&gt;,</span></span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>    ) <span class="op">{</span></span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Nothing to do when a call returns successfully</span></span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Here, the only interesting part is in <code>statement_effect</code>. When a variable becomes live, it’s added to the kill set. When it becomes dead, it’s added to the gen set.</p>
+<p>And that’s all there is to it. Now we can take an arbitrary program and run analysis on it, and inspect the state at each program point. Some of these comments originate from the compiler code:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co">// The set of locals in a MIR body that do not have </span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="co">// `StorageLive`/`StorageDead` annotations.</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co">// These locals have fixed storage for the duration of the body.</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="co">// This is a bit set with all locals that don't have an explicit `StorageLive`</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="co">// or `StorageLocal` set removed from the bit set (i.e. always live, or 0)</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> always_live_locals <span class="op">=</span> always_storage_live_locals(<span class="op">&amp;</span>mir)<span class="op">;</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> <span class="kw">mut</span> maybe_dead <span class="op">=</span> <span class="pp">MaybeStorageDead::</span>new(always_live_locals)</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">.</span>into_engine(tcx<span class="op">,</span> <span class="op">&amp;</span>mir)</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    <span class="op">.</span>iterate_to_fixpoint()</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>    <span class="op">.</span>into_results_cursor(<span class="op">&amp;</span>mir)<span class="op">;</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (bb<span class="op">,</span> _block) <span class="kw">in</span> mir<span class="op">.</span>basic_blocks<span class="op">.</span>iter_enumerated() <span class="op">{</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>    maybe_dead<span class="op">.</span>seek_after_primary_effect(mir<span class="op">.</span>terminator_loc(bb))<span class="op">;</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> state <span class="op">=</span> maybe_dead<span class="op">.</span>get()<span class="op">;</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>    <span class="pp">println!</span>(<span class="st">&quot;maybe dead: {:?}&quot;</span><span class="op">,</span> state)<span class="op">;</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Let’s test this on a contrived program:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">fn</span> test() <span class="op">{</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> <span class="kw">mut</span> x <span class="op">=</span> <span class="dv">2</span><span class="op">;</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> y <span class="op">=</span> <span class="op">&amp;</span><span class="kw">mut</span> x<span class="op">;</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">*</span>y <span class="op">&lt;</span> <span class="dv">10</span> <span class="op">{</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>        <span class="op">*</span>y <span class="op">=</span> <span class="op">*</span>y <span class="op">+</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">*</span>y <span class="op">=</span> <span class="dv">3</span><span class="op">;</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Let’s look at the MIR for this program block by block, along with the results of our dataflow analysis:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">fn</span> test() <span class="op">-&gt;</span> () <span class="op">{</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>	<span class="co">// Live (_0 is always the MIR return value, and is always live)</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> <span class="kw">mut</span> _0<span class="op">:</span> ()<span class="op">;</span> </span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>	<span class="co">// Presumed dead to start (via `initialize_start_block`)</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> <span class="kw">mut</span> _1<span class="op">:</span> <span class="dt">i32</span><span class="op">;</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> _3<span class="op">:</span> ()<span class="op">;</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> <span class="kw">mut</span> _4<span class="op">:</span> <span class="dt">bool</span><span class="op">;</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> <span class="kw">mut</span> _5<span class="op">:</span> <span class="dt">i32</span><span class="op">;</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> <span class="kw">mut</span> _6<span class="op">:</span> <span class="dt">i32</span><span class="op">;</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Will have no associated `StorageDead` or `StorageLive` annotation,</span></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>    <span class="co">// so always presumed live</span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> <span class="kw">mut</span> _7<span class="op">:</span> (<span class="dt">i32</span><span class="op">,</span> <span class="dt">bool</span>)<span class="op">;</span></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>    scope <span class="dv">1</span> <span class="op">{</span></span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>        debug x <span class="op">=&gt;</span> _1<span class="op">;</span></span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>	    <span class="co">// Presumed dead to start (via `initialize_start_block`)</span></span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>        <span class="kw">let</span> _2<span class="op">:</span> <span class="op">&amp;</span><span class="kw">mut</span> <span class="dt">i32</span><span class="op">;</span></span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>        scope <span class="dv">2</span> <span class="op">{</span></span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>            debug y <span class="op">=&gt;</span> _2<span class="op">;</span></span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>    <span class="co">// ...</span></span></code></pre></div>
+<p>This is the set of local declarations for the program. A combination of always-live locals and presumed-dead locals yield the state <code>[_1, _2, _3, _4, _5, _6]</code> when entering <code>bb0</code>.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>bb0<span class="op">:</span> <span class="op">{</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>	StorageLive(_1)<span class="op">;</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>	_1 <span class="op">=</span> <span class="kw">const</span> <span class="dv">2_i32</span><span class="op">;</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>	FakeRead(ForLet(<span class="cn">None</span>)<span class="op">,</span> _1)<span class="op">;</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>	StorageLive(_2)<span class="op">;</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>	_2 <span class="op">=</span> <span class="op">&amp;</span><span class="kw">mut</span> _1<span class="op">;</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>	FakeRead(ForLet(<span class="cn">None</span>)<span class="op">,</span> _2)<span class="op">;</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>	StorageLive(_3)<span class="op">;</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>	StorageLive(_4)<span class="op">;</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>	StorageLive(_5)<span class="op">;</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>	_5 <span class="op">=</span> (<span class="op">*</span>_2)<span class="op">;</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>	_4 <span class="op">=</span> Lt(<span class="kw">move</span> _5<span class="op">,</span> <span class="kw">const</span> <span class="dv">10_i32</span>)<span class="op">;</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>	StorageDead(_5)<span class="op">;</span></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>	switchInt(<span class="kw">move</span> _4) <span class="op">-&gt;</span> [<span class="dv">0</span><span class="op">:</span> bb2<span class="op">,</span> otherwise<span class="op">:</span> bb1]<span class="op">;</span></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a><span class="co">// bb0 (output): [_5, _6]</span></span></code></pre></div>
+<p>Here we can see that all previously-presumed dead locals except <code>_5</code> and <code>_6</code> have their own <code>StorageLive</code> statement not paired by a <code>StorageDead</code> statement, and so upon leaving this block only those locals are presumed dead (after having been added to the kill set).</p>
+<p>In one branch of the <code>bb0</code> control flow (<code>bb1</code>), <code>_6</code> becomes live, and so is part of the kill set and removed from the state:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>bb1<span class="op">:</span> <span class="op">{</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>	StorageLive(_6)<span class="op">;</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>	_6 <span class="op">=</span> (<span class="op">*</span>_2)<span class="op">;</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>	_7 <span class="op">=</span> CheckedAdd(_6<span class="op">,</span> <span class="kw">const</span> <span class="dv">1_i32</span>)<span class="op">;</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>	assert(</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>            <span class="op">!</span><span class="kw">move</span> (_7<span class="op">.</span><span class="dv">1</span><span class="op">:</span> <span class="dt">bool</span>)<span class="op">,</span> </span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>            <span class="st">&quot;attempt to compute `{} + {}`, which would overflow&quot;</span><span class="op">,</span> </span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>            <span class="kw">move</span> _6<span class="op">,</span> <span class="kw">const</span> <span class="dv">1_i32</span>) <span class="op">-&gt;</span> [success<span class="op">:</span> bb3<span class="op">,</span> unwind<span class="op">:</span> bb6]<span class="op">;</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a><span class="co">// bb1 (output): [_5]</span></span></code></pre></div>
+<p>but in the other branch (<code>bb2</code>), it does not become live, and so remains in the set of locals presumed dead:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>bb2<span class="op">:</span> <span class="op">{</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a> goto <span class="op">-&gt;</span> bb4<span class="op">;</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="co">// bb2 (output): [_5, _6]</span></span></code></pre></div>
+<p>Coming from <code>bb1</code> where <code>_6</code> became live, it now becomes dead in <code>bb3</code> and so is added to the <code>gen</code> set and the state leaving that block:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>bb3<span class="op">:</span> <span class="op">{</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>	(<span class="op">*</span>_2) <span class="op">=</span> <span class="kw">move</span> (_7<span class="op">.</span><span class="dv">0</span><span class="op">:</span> <span class="dt">i32</span>)<span class="op">;</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>	StorageDead(_6)<span class="op">;</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>	_3 <span class="op">=</span> <span class="kw">const</span> ()<span class="op">;</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>	goto <span class="op">-&gt;</span> bb5<span class="op">;</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a><span class="co">// bb3 (output): [_5, _6]</span></span></code></pre></div>
+<p>Coming from <code>bb2</code>, nothing changes in <code>bb4</code> because no variables are declared live or dead:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>bb4<span class="op">:</span> <span class="op">{</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>	_3 <span class="op">=</span> <span class="kw">const</span> ()<span class="op">;</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>	goto <span class="op">-&gt;</span> bb5<span class="op">;</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="co">// bb4 (output): [_5, _6]</span></span></code></pre></div>
+<p>Now, at the end of the function, all of the remaining variables <code>_1</code> through <code>_4</code> are declared dead and so are added to the gen set and outgoing state:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>bb5<span class="op">:</span> <span class="op">{</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>	StorageDead(_4)<span class="op">;</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>	StorageDead(_3)<span class="op">;</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>	(<span class="op">*</span>_2) <span class="op">=</span> <span class="kw">const</span> <span class="dv">3_i32</span><span class="op">;</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>	_0 <span class="op">=</span> <span class="kw">const</span> ()<span class="op">;</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>	StorageDead(_2)<span class="op">;</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>	StorageDead(_1)<span class="op">;</span></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>	<span class="cf">return</span><span class="op">;</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a><span class="co">// bb5 (output): [_1, _2, _3, _4, _5, _6]</span></span></code></pre></div>
+<p>Finally, if the checked addition in <code>bb1</code> fails (where the output state is <code>[_5]</code>), <code>bb6</code> is entered where no variables are declared live are dead, and so the state remains unchanged:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>bb6 (cleanup)<span class="op">:</span> <span class="op">{</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>	resume<span class="op">;</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="co">// bb6 (output): [_5]</span></span></code></pre></div>
+<p>I’ve skipped over a bunch of the terminology. Those are covered in depth in compiler courses that touch upon dataflow analysis; you can search for terms like bottom, lattice, semilattice, joins, transfer functions, and more. The <a href="https://en.wikipedia.org/wiki/Data-flow_analysis">Wikipedia</a> page on the topic is a decent place to dig into more.</p>
+<p>As a way of wrapping up, I wanted to give a list of where else the Rust compiler utilizes this form of dataflow analysis.</p>
+<ol type="1">
+<li><a href="https://github.com/rust-lang/rust/blob/df77afbcaf3365a32066a8ca4a00ae6fc9a69647/compiler/rustc_borrowck/src/dataflow.rs#LL342C20-L342C20">Tracking the flow of borrows</a></li>
+<li><a href="https://github.com/rust-lang/rust/blob/df77afbcaf3365a32066a8ca4a00ae6fc9a69647/compiler/rustc_mir_dataflow/src/impls/borrowed_locals.rs#L36">Tracking whether a reference or pointer could point to a given local</a></li>
+<li><a href="https://github.com/rust-lang/rust/blob/df77afbcaf3365a32066a8ca4a00ae6fc9a69647/compiler/rustc_mir_dataflow/src/impls/liveness.rs#L43">Liveness analysis</a></li>
+<li><a href="https://github.com/rust-lang/rust/blob/df77afbcaf3365a32066a8ca4a00ae6fc9a69647/compiler/rustc_mir_dataflow/src/impls/mod.rs#L305">Possibly-initialized variables</a></li>
+<li><a href="https://github.com/rust-lang/rust/blob/df77afbcaf3365a32066a8ca4a00ae6fc9a69647/compiler/rustc_mir_dataflow/src/impls/mod.rs#L441">Possibly-uninitialized variables</a></li>
+<li><a href="https://github.com/rust-lang/rust/blob/df77afbcaf3365a32066a8ca4a00ae6fc9a69647/compiler/rustc_mir_dataflow/src/impls/mod.rs#L561">Definitely-initialized variables</a></li>
+<li><a href="https://github.com/rust-lang/rust/blob/df77afbcaf3365a32066a8ca4a00ae6fc9a69647/compiler/rustc_mir_dataflow/src/impls/storage_liveness.rs#L189">Possibly-requiring storage</a></li>
+</ol>
+<p>In addition to this (incomplete) list of gen-kill problems, the rust compiler also has some analyses modeled using the more generic albeit less-performant <a href="https://github.com/rust-lang/rust/blob/df77afbcaf3365a32066a8ca4a00ae6fc9a69647/compiler/rustc_mir_dataflow/src/framework/mod.rs#L146"><code>Analysis</code></a> trait. For example, as of writing this post, the latest version of constant propagation, <a href="https://github.com/rust-lang/rust/blob/df77afbcaf3365a32066a8ca4a00ae6fc9a69647/compiler/rustc_mir_transform/src/dataflow_const_prop.rs#L77"><code>ConstAnalysis</code></a>, is built on top of <a href="https://github.com/rust-lang/rust/blob/df77afbcaf3365a32066a8ca4a00ae6fc9a69647/compiler/rustc_mir_dataflow/src/value_analysis.rs#L341"><code>ValueAnalysis</code></a> (something surprising to me is that this isn’t also set up as a gen-kill analysis, particularly the portion formulating <a href="https://github.com/rust-lang/rust/blob/df77afbcaf3365a32066a8ca4a00ae6fc9a69647/compiler/rustc_mir_dataflow/src/value_analysis.rs#L441">reachability</a>, which is a go-to use-case for gen-kill analysis. Please let me know why, if you know).</p>
+<p><em>The code for the post is available <a href="https://github.com/oinoom/rustc-dataflow-example">here</a>.</em></p>
+    </section>
+</article>
+
+    </main>
+    <div id="footer">
+        <small><a href="../rss.xml">RSS</a></small>
+        <small><a href="../atom.xml">Atom</a></small>
+        <small>&copy; Copyright 2026, David Anekstein</small>
+    </div>
+
+    <script>
+        const menuToggle = document.getElementById('menu-toggle');
+        const navigation = document.getElementById('navigation');
+        
+        menuToggle.addEventListener('click', function() {
+            navigation.classList.toggle('open');
+            menuToggle.classList.toggle('open');
+        });
+    </script>
+</body>
+
+</html>

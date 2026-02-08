@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>To Be Determined - Tensor Chain Contraction with Refolds
+</title>
+    <link rel="stylesheet" href="../css/default.css" />
+    <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="alternate" type="application/rss+xml" title="David Anekstein's blog - To Be Determined" href="./rss.xml">
+    <link rel="alternate" type="application/atom+xml" title="David Anekstein's blog - To Be Determined" href="./atom.xml">
+</head>
+
+<body>
+    <div id="header">
+        <div id="logo">
+            <a href="../">To Be Determined</a>
+        </div>
+        <button id="menu-toggle" aria-label="Toggle navigation">☰</button>
+        <div id="navigation">
+            <a href="../posts.html">Posts</a>
+            <a href="../projects.html">Projects</a>
+            <a href="../publications.html">Publications</a>
+            <a href="../about.html">About</a>
+        </div>
+    </div>
+
+    <main role="main">
+        <article>
+    <section class="header">
+        <h1>Tensor Chain Contraction with Refolds
+</h1>
+        <div class="info">
+            Posted on August  9, 2020
+            
+        </div>
+    </section>
+    <section>
+        <p><em>You can find the source code for this post <a href="https://github.com/oinoom/tensorchain">here</a>.</em></p>
+<p>In a <a href="./posts/2019-11-15.html">previous post</a> we utilized recursion schemes in prototyping a genetic algorithms library. I wanted to look more into their use cases and was happy to discover that they could even be leveraged for dynamic programming.</p>
+<h2 id="matrix-chain-multiplication">Matrix Chain Multiplication</h2>
+<p>One of my favorite applications of dynamic programming is matrix chain multiplication; given a bunch of matrices with shared indices, the goal is to find the smallest number of arithmetic operations possible in calculating their product. Usually, this is accompanied by deriving the optimal parenthesization.</p>
+<p>There are <em>lots</em> of examples online that outline the conventional dynamic programming approach, so I’m not going to rehash it here. I do, however, recommend familiarizing yourself with the dynamic programming solution before moving on. Here, we’ll focus on leveraging recursion schemes to get the job done.</p>
+<p>To find the optimal parenthesization, <a href="http://www.cs.ox.ac.uk/people/nicolas.wu/publications/Histomorphisms.pdf">Hinze and Wu</a> leverage a recursion scheme called a dynamorphism, which can be modeled in part with a recursion scheme touched upon in the <a href="./posts/2019-11-15.html">last post</a> called a hylomorphism, described as a function that unfolds (builds) some intermediate structure (using a <code>CoAlgebra</code>) and folds (reduces) that intermediate structure into some accumulated value (using an <code>Algebra</code>):</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">Algebra</span> f a <span class="ot">=</span> f a <span class="ot">-&gt;</span> a</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">CoAlgebra</span> f a <span class="ot">=</span> a <span class="ot">-&gt;</span> f a</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="ot">hylo ::</span> <span class="dt">Functor</span> f <span class="ot">=&gt;</span> <span class="dt">CoAlgebra</span> f a <span class="ot">-&gt;</span> <span class="dt">Algebra</span> f b <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> b</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>hylo f g <span class="ot">=</span> h <span class="kw">where</span> h <span class="ot">=</span> g <span class="op">.</span> <span class="fu">fmap</span> h <span class="op">.</span> f</span></code></pre></div>
+<p>Due to this unfolding and folding mechanism, hylomorphisms are sometimes referred to as a kind of refold.</p>
+<p>Dynamorphisms, another type of refold, are very similar to a hylomorphism; a dynamorphism performs the same behavior as a hylomorphism but maintains a record of its folds by storing the result of each one into a structure called a <code>Cofree Comonad</code>:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">Cofree</span> f a <span class="ot">=</span> a <span class="op">:&lt;</span> (f (<span class="dt">Cofree</span> f a))</span></code></pre></div>
+<p>If this looks confusing, don’t fret. It’s extremely similar to a recursive definition of a list type, and we’ll be treating it as such:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- normal list type</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">List</span> valueType <span class="ot">=</span> </span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">Cons</span> valueType (<span class="dt">List</span> valueType) <span class="op">|</span> <span class="dt">Nil</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co">-- closer to Cofree</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">ListS</span> containerType valueType <span class="ot">=</span> </span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">ConsS</span> valueType (<span class="dt">ListS</span> containerType valueType)</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="co">-- even closer to Cofree</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">ListCF</span> containerType valueType <span class="ot">=</span> </span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    <span class="dt">ConsCF</span> valueType (containerType (<span class="dt">ListCF</span> containerType valueType))</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="co">-- basically Cofree</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">ListCF</span> containerType valueType <span class="ot">=</span> </span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>    valueType <span class="op">:&lt;</span> (containerType (<span class="dt">ListCF</span> containerType valueType))</span></code></pre></div>
+<p>Let’s compare the signature of a dynamorphism to a hylomorphism without the type synonyms:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ot">hylo ::</span> <span class="dt">Functor</span> f <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f a) <span class="ot">-&gt;</span> (f b <span class="ot">-&gt;</span> b)            <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> b</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="ot">dyna ::</span> <span class="dt">Functor</span> f <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f a) <span class="ot">-&gt;</span> (f (<span class="dt">Cofree</span> f b) <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> b</span></code></pre></div>
+<p>We can see that they are pretty similar, and we can see in the definition of <code>dyna</code> that this really is a hylomorphism that keeps track of the values calculated:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- extracts the first value from Cofree</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="ot">extract ::</span> <span class="dt">Cofree</span> f a <span class="ot">-&gt;</span> a</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>extract (a <span class="op">:&lt;</span> _) <span class="ot">=</span> a</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="ot">dyna ::</span> <span class="dt">Functor</span> f <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f a) <span class="ot">-&gt;</span> (f (<span class="dt">Cofree</span> f b) <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> b</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>dyna h g <span class="ot">=</span> extract <span class="op">.</span> hylo h (\fcfb <span class="ot">-&gt;</span> (g fcfb) <span class="op">:&lt;</span> fcfb)</span></code></pre></div>
+<p>The dynamorphism builds an intermediate structure with <code>h a</code> and it stores the result of applying <code>g</code> to that value in a <code>Cofree</code>. Using our list analogy, it’s applying <code>g</code> to the incoming functor and prepending the result to an existing list of past-calculated values. This is reminiscent of the <a href="https://hackage.haskell.org/package/base-4.14.0.0/docs/Data-List.html#g:8"><code>iterate</code></a> function, which repeatedly applies a function <code>f</code> to some value <code>x</code> and appends each application’s result to a list.</p>
+<p>By keeping a history of the dynamorphism’s applications of the folding function it’s supplied, one can reach back into the <code>Cofree</code> structure and utilize pre-calculated values a la dynamic programming, which is exactly what Hinze and Wu do for matrix chain multiplication:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- grab the nth element of a Cofree</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="ot">get ::</span> <span class="dt">Cofree</span> (<span class="dt">ListF</span> v) a <span class="ot">-&gt;</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> a</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>get (x <span class="op">:&lt;</span> xs) <span class="dv">0</span> <span class="ot">=</span> x</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>get (x <span class="op">:&lt;</span> (<span class="dt">Cons</span> _ xs)) n <span class="ot">=</span> xs <span class="ot">`get`</span> (n<span class="op">-</span><span class="dv">1</span>)</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="co">-- take the first n elements of a Cofree</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="ot">collect ::</span> <span class="dt">Cofree</span> (<span class="dt">ListF</span> v) a <span class="ot">-&gt;</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> [a]</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>collect _ <span class="dv">0</span> <span class="ot">=</span> []</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>collect (x <span class="op">:&lt;</span> (<span class="dt">Some</span> _)) n <span class="ot">=</span> [x]</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>collect (x <span class="op">:&lt;</span> (<span class="dt">Cons</span> _ cf)) n <span class="ot">=</span> x <span class="op">:</span> cf <span class="ot">`collect`</span> (n<span class="op">-</span><span class="dv">1</span>)</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="ot">chainM ::</span> [<span class="dt">Int</span>] <span class="ot">-&gt;</span> <span class="dt">Int</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>chainM dims <span class="ot">=</span> dyna triangle findParen <span class="fu">range</span> <span class="kw">where</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">range</span> <span class="ot">=</span> (<span class="dv">1</span>, <span class="fu">length</span> dims <span class="op">-</span> <span class="dv">1</span>)</span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a><span class="ot">    triangle ::</span> (<span class="dt">Int</span>,<span class="dt">Int</span>) <span class="ot">-&gt;</span> <span class="dt">ListF</span> (<span class="dt">Int</span>,<span class="dt">Int</span>) (<span class="dt">Int</span>,<span class="dt">Int</span>)</span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>    triangle (<span class="dv">1</span>,<span class="dv">1</span>) <span class="ot">=</span> <span class="dt">Some</span> (<span class="dv">1</span>,<span class="dv">1</span>)</span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>    triangle (i,j)</span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>        <span class="op">|</span> i <span class="op">==</span> j <span class="ot">=</span> <span class="dt">Cons</span> (i,j) (<span class="dv">1</span>,j<span class="op">-</span><span class="dv">1</span>)</span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>        <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> <span class="dt">Cons</span> (i,j) (i<span class="op">+</span><span class="dv">1</span>,j)</span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a><span class="ot">    findParen ::</span> <span class="dt">ListF</span> (<span class="dt">Int</span>,<span class="dt">Int</span>) (<span class="dt">Cofree</span> (<span class="dt">ListF</span> (<span class="dt">Int</span>,<span class="dt">Int</span>)) <span class="dt">Int</span>) <span class="ot">-&gt;</span> <span class="dt">Int</span></span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>    findParen (<span class="dt">Some</span> j) <span class="ot">=</span> <span class="dv">0</span></span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>    findParen (<span class="dt">Cons</span> (i,j) table)</span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a>        <span class="op">|</span> i <span class="op">==</span> j <span class="ot">=</span> <span class="dv">0</span></span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a>        <span class="op">|</span> i <span class="op">&lt;</span> j <span class="ot">=</span> <span class="fu">minimum</span> (<span class="fu">zipWith</span> (<span class="op">+</span>) as bs) <span class="kw">where</span></span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a>            as <span class="ot">=</span> [(dims <span class="op">!!</span> (i<span class="op">-</span><span class="dv">1</span>)) <span class="op">*</span> (dims <span class="op">!!</span> k) <span class="op">*</span> (dims <span class="op">!!</span> j) </span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a>                   <span class="op">+</span> (table <span class="ot">`get`</span> offset k) <span class="op">|</span> k <span class="ot">&lt;-</span> [i<span class="op">..</span>j<span class="op">-</span><span class="dv">1</span>]]</span>
+<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a>            bs <span class="ot">=</span> table <span class="ot">`collect`</span> (j<span class="op">-</span>i)</span>
+<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a>            offset k <span class="ot">=</span> ((j<span class="op">*</span>(j<span class="op">+</span><span class="dv">1</span>) <span class="op">-</span> k<span class="op">*</span>(k<span class="op">+</span><span class="dv">1</span>)) <span class="ot">`div`</span> <span class="dv">2</span>) <span class="op">-</span> <span class="dv">1</span></span></code></pre></div>
+<p>With dependencies between subproblems modeled as a directed acyclic graph, the algorithm unfolds a range into a list of cell coordinates in reverse topological order using the <code>triangle</code> function. It then folds that list in topological order with <code>findParen</code>, maintaining a table of past-calculated values along the way. With every folding step, <code>findParen</code> reaches back into the table to find the pre-calculated values in cells <code>(i,k)</code> and <code>(k+1,j)</code> for every <code>k</code> in the range <code>[i,j-1]</code> and finds the best <code>k</code> to split the intermediate matrix <span class="math inline"><em>M</em><sub><em>i</em><em>j</em></sub></span>. As you can tell from the way these values are calculated, Hinze and Wu carefully consider and identify where these previously-calculated values may be found in the <code>Cofree</code>.</p>
+<p>However, there are two pieces causing this function to lose the <span class="math inline">𝒪(<em>N</em><sup>3</sup>)</span> complexity found in the conventional dynamic programming approach; our first problem is that Haskell lists are not built like typical arrays, but like linked lists, so <code>dims !! x</code> has complexity <span class="math inline">𝒪(<em>N</em>)</span> rather than the desired <span class="math inline">𝒪(1)</span> – but this at least can be remedied with something like <code>Data.Vector</code>. Our second problem is similar; <code>Cofree</code> is like a linked list, and so reaching into the <code>Cofree</code> structure with <code>get</code> is a linear operation; the pre-calculated value at <code>offset k</code> is not guaranteed to be within a constant distance of the head of <code>Cofree</code>. If we were calculating something like the <span class="math inline"><em>n</em><sup><em>t</em><em>h</em></sup></span> Fibonacci number, we would only need to look back two elements and would be in the clear, but here it is not the case; we’ve caused the overall complexity to reach <span class="math inline">𝒪(<em>N</em><sup>4</sup>)</span>.</p>
+<p>I’m unaware of a way that something like <code>Cofree</code> can allow us to peek into its structure in constant time, particularly when the element we’d like grab is arbitrarily nested. So, instead of relying upon a dynamorphism, we can return to a hylomorphism – and, instead of a list or a vector of pre-calculated scores with nontrivial offset calculations, we’ll maintain a “two-dimensional” memoization table. For simplicity’s sake, we’ll leverage a <code>HashMap</code>, but one could easily use <code>Data.Vector</code>. So, <code>findParen</code> will then take the following form:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">Map</span> <span class="ot">=</span> <span class="dt">HashMap.Map</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="ot">chainM ::</span> [<span class="dt">Int</span>] <span class="ot">-&gt;</span> <span class="dt">Int</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>chainM dims <span class="ot">=</span> best <span class="kw">where</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    best <span class="ot">=</span> (hylo triangle findParen <span class="fu">range</span>) <span class="op">!</span> <span class="fu">range</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="co">-- ...</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a><span class="ot">    findParen ::</span> <span class="dt">Algebra</span> (<span class="dt">ListF</span> (<span class="dt">Int</span>,<span class="dt">Int</span>)) (<span class="dt">Map</span> (<span class="dt">Int</span>,<span class="dt">Int</span>) <span class="dt">Int</span>)</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>    findParen (<span class="dt">Some</span> (j,_)) <span class="ot">=</span> Map.insert (j,j) <span class="dv">0</span> Map.empty</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>    findParen (<span class="dt">Cons</span> (i,j) table)</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>        <span class="op">|</span> i <span class="op">==</span> j <span class="ot">=</span> Map.insert (i,j) <span class="dv">0</span> table</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>        <span class="op">|</span> i <span class="op">&lt;</span> j <span class="ot">=</span> Map.insert (i,j) (<span class="fu">minimum</span> parenthesizations) table <span class="kw">where</span></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>            cost x y <span class="ot">=</span> table <span class="op">!</span> (x,y)</span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>            space (x,y,z) <span class="ot">=</span> (dims <span class="op">!!</span> x) <span class="op">*</span> (dims <span class="op">!!</span> y) <span class="op">*</span> (dims <span class="op">!!</span> z)</span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>            parenthesizations <span class="ot">=</span> </span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>                [space (i<span class="op">-</span><span class="dv">1</span>,k,j) <span class="op">+</span> cost i k <span class="op">+</span> cost (k<span class="op">+</span><span class="dv">1</span>) j <span class="op">|</span> k <span class="ot">&lt;-</span> [i<span class="op">..</span>j<span class="op">-</span><span class="dv">1</span>]]</span></code></pre></div>
+<p>With this change and an imagined switch to <code>Data.Vector</code> for the sequence of <code>dims</code>, we can bring the time complexity back to <span class="math inline">𝒪(<em>N</em><sup>3</sup>)<sup>*</sup></span>.</p>
+<p>* <em>Sort of, the <code>unordered-containers</code> package mentions “[m]any operations have a average-case complexity of <span class="math inline">𝒪(<em>l</em><em>o</em><em>g</em><em>N</em>)</span>. The implementation uses a large base (i.e. 16) so in practice these operations are constant time.” If we really wanted constant time, we could use a two dimensional</em> <code>Vector</code> <em>but we’ll stick with</em> <code>HashMap</code> <em>for simplicity.</em></p>
+<p>For a chain of matrices such as:</p>
+<p><img src="../images/10.png" /></p>
+<p>we can see the minimum number of operations possible is <code>102</code>:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> matrices <span class="ot">=</span> [<span class="dv">4</span>,<span class="dv">3</span>,<span class="dv">5</span>,<span class="dv">2</span>,<span class="dv">4</span>,<span class="dv">3</span>]</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="fu">putStrLn</span> <span class="op">.</span> <span class="fu">show</span> <span class="op">$</span> chainM matrices <span class="co">-- 102</span></span></code></pre></div>
+<h2 id="tensor-chain-contraction">Tensor Chain Contraction</h2>
+<p>We can view this chain of matrices as a graph with weighted edges that we’d like to contract together; each matrix multiplication costs the product of all edge weights incident to the matrices being multiplied, up to a constant factor:</p>
+<p><img src="../images/1.png" /></p>
+<p>If the relationship between the equation and diagram is escaping you, I encourage you to check out the <a href="https://www.math3ma.com/blog/matrices-as-tensor-network-diagrams">wonderful tutorial</a> by Tai-Danae Bradley, which indicates that matrix multiplication is a special case of tensor contraction. Let’s take a look at a different graph:</p>
+<p><img src="../images/3.png" /></p>
+<p>Instead of matrices with two dimensions, we have multidimensional tensors with some indices that are free. The problem is now to find the optimal parenthesization of a chain of tensors to be contracted.</p>
+<p>Additionally, the indices of the tensors involved in the chain contraction need not be free; they can be bound to other tensors outside of the chain of interest, or even to other tensors in the chain.</p>
+<p><img src="../images/2.png" /></p>
+<p>We can now put our sights on finding the optimal contraction order of a path within some arbitrary tensor network.</p>
+<p>It turns out that we can apply the same dynamic programming approach to tensor chain contraction – and credit goes to my colleague Jonathan Jakes-Schauer for the insight. The key is to keep track of all indices that are incident to the chain of interest, because they’ll each contribute to the cost of the contractions in which their tensors participate.</p>
+<p>For matrix chain products we saw that <code>findParen</code> identified an index <code>k</code> that optimally decomposed a given intermediate matrix into two. This calculation recursively depended upon the optimal way to decompose those two matrices, down to the original matrices in the chain (which cost nothing to construct). The question then is how to calculate the cost of contracting two tensors; two contracted tensors may share more than just one index, and so we must account for more than just the dimensions of those indices, as we did before. To illustrate, consider the example below:</p>
+<p><img src="../images/4.png" /></p>
+<p>Once tensor A has been contracted into B, and C into D, the resulting intermediate tensors AB and CD share two indices. Because index <code>w</code> was originally incident to neither tensor B nor D, it’s important that we don’t overcount the number of operations associated with contracting AB and CD; if this contraction appeared in the dynamic programming routine with <span class="math inline"><em>i</em> = 1</span>, <span class="math inline"><em>k</em> = 2</span>, and <span class="math inline"><em>j</em> = 4</span>, and we calculated the cost as before without regard to the identity of the indices involved, we would cost this contraction at <span class="math inline"><em>w</em><em>z</em><em>w</em></span> rather than the true cost, which is <span class="math inline"><em>w</em><em>z</em></span>. Towards this end, we’ll maintain the identity of all indices participant to and resulting from each contraction, using the following types:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">Tensor</span> <span class="ot">=</span> <span class="dt">Map</span> <span class="dt">Int</span> <span class="dt">Int</span> </span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">ContractionTree</span> a <span class="ot">=</span> </span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">Tensor</span> a </span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span> <span class="dt">Intermediate</span> (<span class="dt">ContractionTree</span> a) (<span class="dt">ContractionTree</span> a)</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">TensorData</span> <span class="ot">=</span> <span class="dt">TensorData</span> {</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="ot">    totalCost ::</span> <span class="dt">Int</span>,</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a><span class="ot">    recipe ::</span> <span class="dt">ContractionTree</span> <span class="dt">Int</span>,</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a><span class="ot">    indices ::</span> <span class="dt">Tensor</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<p>where <code>totalCost</code> denotes the cost of the contraction plus the total cost of having created each of the two tensors being contracted, <code>recipe</code> is a helper datatype for knowing the order in which those two tensors were created and contracted together, and <code>indices</code> is the resulting tensor itself, represented by the bundle of incident indices – a mapping from index identifiers to their dimensions.</p>
+<p>Suppose we would like to contract two tensors and want to know the resulting <code>totalCost</code> and <code>indices</code> using a function with the following type:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="ot">contract ::</span> (<span class="dt">TensorData</span>, <span class="dt">TensorData</span>) <span class="ot">-&gt;</span> <span class="dt">TensorData</span></span></code></pre></div>
+<p>Suppose the indices of those two tensors are a given and we’d like to know what indices are left over from the contraction. We can see from an example like the one below:</p>
+<p><img src="../images/5.png" /></p>
+<p>that the indices left over from the contraction are equal to the symmetric difference of all indices incident to the tensors being contracted:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="ot">contract ::</span> (<span class="dt">TensorData</span>, <span class="dt">TensorData</span>) <span class="ot">-&gt;</span> <span class="dt">TensorData</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>contract (left,right) <span class="ot">=</span> <span class="dt">TensorData</span> {</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    totalCost <span class="ot">=</span> <span class="op">...</span>,</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    recipe <span class="ot">=</span> <span class="op">...</span>,</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    indices <span class="ot">=</span> symDiff (indices left) (indices right),</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>} <span class="kw">where</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>    symDiff l r <span class="ot">=</span> (l \\ r) <span class="op">&lt;&gt;</span> (r \\ l)</span></code></pre></div>
+<p>where <code>x \\ y</code> is the set difference, or <code>x - y</code>, and <code>x &lt;&gt; y</code> is the set union.</p>
+<p>We’ve mentioned already that the cost of contracting two tensors is the product of all indices incident to the two tensors. More formally, for tensors <span class="math inline"><em>A</em></span> and <span class="math inline"><em>B</em></span>, the cost of contraction is</p>
+<p><img src="../images/11.png" /></p>
+<p>where <span class="math inline"><em>I</em>(<em>X</em>)</span> denotes the set of indices belonging to some tensor <span class="math inline"><em>X</em></span>. Given this, and set of indices we’ve maintained from earlier contractions, we can then calculate the cost of splitting an intermediate tensor as was done in the case of matrices. We identify two “child” tensors when splitting some intermediate tensor as discussed above; it’s determined by the start <span class="math inline"><em>i</em></span> of the subchain in question, the end <span class="math inline"><em>j</em></span> of the subchain in question, and the marker <span class="math inline"><em>k</em></span>, where the chain shall be split; the intermediate tensor <span class="math inline"><em>T</em><sub><em>i</em></sub><em>T</em><sub><em>i</em> + 1</sub>..<em>T</em><sub><em>k</em></sub> = <em>T</em><sub><em>i</em><em>k</em></sub></span> marks the first tensor, and <span class="math inline"><em>T</em><sub><em>k</em> + 1</sub><em>T</em><sub><em>k</em> + 2</sub>..<em>T</em><sub><em>j</em></sub> = <em>T</em><sub>(<em>k</em>+1)<em>j</em></sub></span> marks the second. When contracted, they result in tensor <span class="math inline"><em>T</em><sub><em>i</em><em>j</em></sub></span>.</p>
+<p><img src="../images/12.png" /></p>
+<p>With this, we have all the information necessary to represent the resulting tensor:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>tspace <span class="ot">=</span> Map.foldl (<span class="op">*</span>) <span class="dv">1</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="ot">contract ::</span> (<span class="dt">TensorData</span>, <span class="dt">TensorData</span>) <span class="ot">-&gt;</span> <span class="dt">TensorData</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>contract (left,right) <span class="ot">=</span> <span class="dt">TensorData</span> {</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>    totalCost <span class="ot">=</span> tspace (indices left <span class="op">&lt;&gt;</span> indices right) </span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>                <span class="op">+</span> (totalCost left) </span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>                <span class="op">+</span> (totalCost right),</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>    recipe <span class="ot">=</span> <span class="dt">Intermediate</span> (recipe left) (recipe right)</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>    indices <span class="ot">=</span> symDiff (indices left) (indices right),</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>} <span class="kw">where</span></span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>    symDiff l r <span class="ot">=</span> (l \\ r) <span class="op">&lt;&gt;</span> (r \\ l) <span class="co">-- symmetric difference</span></span></code></pre></div>
+<p>However, calculating the symmetric difference as well as the union of the indices incident to participant tensors is <span class="math inline">𝒪(<em>R</em>)</span>, where <span class="math inline"><em>R</em></span> is maximum order among tensors contracted. If we do this for every <span class="math inline"><em>T</em><sub><em>i</em><em>k</em></sub></span> and <span class="math inline"><em>T</em><sub>(<em>k</em>+1)<em>j</em></sub></span>, we’ve increased the complexity of our algorithm to <span class="math inline">𝒪(<em>R</em><em>N</em><sup>3</sup>)</span>.</p>
+<p>Can we do better? Can we calculate cost and symmetric difference in a way that’s independent of <code>k</code> to store in our memoization table for when it’s time to consider <span class="math inline"><em>T</em><sub><em>i</em><em>j</em></sub></span>?</p>
+<p>Let’s consider the symmetric difference, which is <a href="https://proofwiki.org/wiki/Symmetric_Difference_is_Associative">associative</a>. If we have an intermediate tensor <span class="math inline"><em>T</em><sub><em>i</em><em>j</em></sub></span>, no matter which value for <code>k</code> we evaluate, the set of indices belonging to <span class="math inline"><em>T</em><sub><em>i</em><em>j</em></sub></span> will always be the same. So, we don’t need to calculate this for every value of <code>k</code> after all, we only need to reach into the memoization table to find one <code>k</code> value that’s already been considered. Where can we find that <code>k</code>? If we look back at the <code>triangle</code> function, we receive a hint:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="ot">    triangle ::</span> (<span class="dt">Int</span>,<span class="dt">Int</span>) <span class="ot">-&gt;</span> <span class="dt">ListF</span> (<span class="dt">Int</span>,<span class="dt">Int</span>) (<span class="dt">Int</span>,<span class="dt">Int</span>)</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    triangle (<span class="dv">1</span>,<span class="dv">1</span>) <span class="ot">=</span> <span class="dt">Some</span> (<span class="dv">1</span>,<span class="dv">1</span>)</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    triangle (i,j)</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>        <span class="op">|</span> i <span class="op">==</span> j <span class="ot">=</span> <span class="dt">Cons</span> (i,j) (<span class="dv">1</span>,j<span class="op">-</span><span class="dv">1</span>)</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>        <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> <span class="dt">Cons</span> (i,j) (i<span class="op">+</span><span class="dv">1</span>,j)</span></code></pre></div>
+<p>for a given pair <code>(i,j)</code>, we append that pair to a list containing <code>(i+1,j)</code> at the head. So, by the time we reach <code>(i,j)</code> in our fold within <code>findParen</code>, <code>(i+1,j)</code> is already in the memoization table. This means that a value <code>k = i</code> has already been accounted for and we can access the information for <span class="math inline"><em>T</em><sub><em>i</em><em>i</em></sub></span> and <span class="math inline"><em>T</em><sub>(<em>i</em>+1)<em>j</em></sub></span>, and calculate the symmetric difference, i.e. the indices leftover from the contraction:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>indLeft <span class="ot">=</span> indices <span class="op">$</span> table <span class="op">!</span> (i,i)</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>indNext <span class="ot">=</span> indices <span class="op">$</span> table <span class="op">!</span> (i<span class="op">+</span><span class="dv">1</span>,j)</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>symdiff <span class="ot">=</span> (indLeft \\ indNext) <span class="op">&lt;&gt;</span> (indNext \\ indLeft) <span class="co">-- O(R)</span></span></code></pre></div>
+<p>That’s one half of our problem solved. Unfortunately, the same intuition cannot be applied to finding each contraction cost, which is not associative. This is obvious when you consider for a moment that, if it were, this problem of finding the optimal parenthesization wouldn’t exist!</p>
+<p>This doesn’t completely kill our chances of remaining independent of <code>k</code>, however, it just means we can’t do so and continue thinking about cost in the same way. So, let’s think about it another way.</p>
+<h3 id="contraction-trees">Contraction Trees</h3>
+<p>Described in <a href="https://arxiv.org/abs/1908.11034">Carving-width and contraction trees for tensor networks</a>, a contraction tree is a data structure describing a particular set of tensor contraction orders. For example, take a look at the following parenthesization of our matrix chain and notice its mapping to a contraction tree:</p>
+<p><img src="../images/6.png" /></p>
+<p>If this chain was comprised of higher-order tensors, the concept would remain the same.</p>
+<p>We can weight the arcs of this tree, where the weight corresponds to the symmetric difference of the indices incident to the tensors getting contracted. We start with the arcs incident to the leaf nodes, corresponding to the original tensors and their indices:</p>
+<p><img src="../images/7.png" /></p>
+<p>Similarly, we can weight each internal node, representing each intermediate tensor, with their cost of creation – the product of the set union of its protruding arcs:</p>
+<p><img src="../images/8.png" /></p>
+<p>If you look closely at each internal node, you’ll notice one interesting property:</p>
+<p><img src="../images/9.png" /></p>
+<p>For each node with arcs <span class="math inline"><em>a</em></span>, <span class="math inline"><em>a</em>′</span>, and <span class="math inline"><em>a</em>″</span>, the weight of the node itself, i.e. the cost of its creation, is:</p>
+<p><img src="../images/13.png" /></p>
+<p>We can reconsider the labels of our arcs in a way that captures the nature of the problem at hand:</p>
+<p><img src="../images/14.png" /></p>
+<p>With this we can see that the weights of arcs correspond to the set of indices child tensors <span class="math inline"><em>T</em><sub><em>i</em><em>k</em></sub></span> and <span class="math inline"><em>T</em><sub>(<em>k</em>+1)<em>j</em></sub></span> and their result, <span class="math inline"><em>T</em><sub><em>i</em><em>j</em></sub></span>, each contain. By maintaining an account of those arc weights, we can calculate the cost of the contraction in a way that relies on the associative symmetric difference. In other words, we can now calculate the cost in a way that’s independent of <code>k</code>. First, we’ll add a new attribute called <code>cspace</code> that captures this arc weight:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">TensorData</span> <span class="ot">=</span> <span class="dt">TensorData</span> {</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="ot">    totalCost ::</span> <span class="dt">Int</span>,</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="ot">    recipe ::</span> <span class="dt">ContractionTree</span> <span class="dt">Int</span>,</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="ot">    cspace ::</span> <span class="dt">Int</span>,</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="ot">    indices ::</span> <span class="dt">Tensor</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<p>which we can utilize in calculating the cost:</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>    indLeft <span class="ot">=</span> indices <span class="op">$</span> table <span class="op">!</span> (i,i)</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>    indNext <span class="ot">=</span> indices <span class="op">$</span> table <span class="op">!</span> (i<span class="op">+</span><span class="dv">1</span>,j)</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>    symdiff <span class="ot">=</span> (indLeft \\ indNext) <span class="op">&lt;&gt;</span> (indNext \\ indLeft) <span class="co">-- O(R)</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>    cspaceij <span class="ot">=</span> tspace symdiff <span class="co">-- O(R)</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- get contraction data of combining two intermediate tensors: O(1)</span></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a><span class="ot">    contract ::</span> (<span class="dt">TensorData</span>, <span class="dt">TensorData</span>) <span class="ot">-&gt;</span> <span class="dt">TensorData</span></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>    contract (left,right) <span class="ot">=</span> <span class="dt">TensorData</span> {</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>        totalCost <span class="ot">=</span> totalCost left <span class="op">+</span> totalCost right <span class="op">+</span> sqrtCspaces,</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>        recipe <span class="ot">=</span> <span class="dt">Intermediate</span> (recipe left) (recipe right),</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>        cspace <span class="ot">=</span> cspaceij,</span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>        indices <span class="ot">=</span> symdiff</span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>    } <span class="kw">where</span></span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>        cspaces <span class="ot">=</span> cspace left <span class="op">*</span> cspace right <span class="op">*</span> cspaceij</span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>        sqrtCspaces <span class="ot">=</span> <span class="fu">round</span> <span class="op">.</span> <span class="fu">sqrt</span> <span class="op">.</span> <span class="fu">fromIntegral</span> <span class="op">$</span> cspaces</span></code></pre></div>
+<h2 id="wrapping-up">Wrapping Up</h2>
+<p>Putting everything together, we now have everything we need for an algorithm that can calculate the tensor chain product for any path in a tensor network in <span class="math inline">𝒪(<em>R</em><em>N</em><sup>2</sup>+<em>N</em><sup>3</sup>)</span> time. After addressing the portions of our memoization table that correspond to our original tensors, we have our final result:</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="ot">chainT ::</span> <span class="dt">Vector</span> <span class="dt">Tensor</span> <span class="ot">-&gt;</span> <span class="dt">TensorData</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>chainT tensors <span class="ot">=</span> best <span class="kw">where</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>    best <span class="ot">=</span> (hylo triangle findParen <span class="fu">range</span>) <span class="op">!</span> <span class="fu">range</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">range</span> <span class="ot">=</span> (<span class="dv">1</span>, <span class="fu">length</span> tensors)</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>    emptyData i <span class="ot">=</span> <span class="dt">TensorData</span> {</span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>        totalCost <span class="ot">=</span> <span class="dv">0</span>,</span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>        recipe <span class="ot">=</span> <span class="dt">Tensor</span> i,</span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>        cspace <span class="ot">=</span> tspace t,</span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>        indices <span class="ot">=</span> t</span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>    } <span class="kw">where</span> t <span class="ot">=</span> (<span class="op">V.!</span>) tensors (i<span class="op">-</span><span class="dv">1</span>)</span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a><span class="ot">    triangle ::</span> (<span class="dt">Int</span>,<span class="dt">Int</span>) <span class="ot">-&gt;</span> <span class="dt">ListF</span> (<span class="dt">Int</span>,<span class="dt">Int</span>) (<span class="dt">Int</span>,<span class="dt">Int</span>)</span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>    triangle (<span class="dv">1</span>,<span class="dv">1</span>) <span class="ot">=</span> <span class="dt">Some</span> (<span class="dv">1</span>,<span class="dv">1</span>)</span>
+<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a>    triangle (i,j)</span>
+<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a>        <span class="op">|</span> i <span class="op">==</span> j <span class="ot">=</span> <span class="dt">Cons</span> (i,j) (<span class="dv">1</span>,j<span class="op">-</span><span class="dv">1</span>)</span>
+<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a>        <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> <span class="dt">Cons</span> (i,j) (i<span class="op">+</span><span class="dv">1</span>,j)</span>
+<span id="cb17-19"><a href="#cb17-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-20"><a href="#cb17-20" aria-hidden="true" tabindex="-1"></a><span class="ot">    findParen ::</span> <span class="dt">Algebra</span> (<span class="dt">ListF</span> (<span class="dt">Int</span>,<span class="dt">Int</span>)) (<span class="dt">Map</span> (<span class="dt">Int</span>,<span class="dt">Int</span>) <span class="dt">TensorData</span>)</span>
+<span id="cb17-21"><a href="#cb17-21" aria-hidden="true" tabindex="-1"></a>    findParen (<span class="dt">Some</span> (t,_)) <span class="ot">=</span> Map.insert (t,t) (emptyData t) Map.empty <span class="co">-- O(R)</span></span>
+<span id="cb17-22"><a href="#cb17-22" aria-hidden="true" tabindex="-1"></a>    findParen (<span class="dt">Cons</span> (i,j) table) <span class="co">-- O(R + N) per (i,j)</span></span>
+<span id="cb17-23"><a href="#cb17-23" aria-hidden="true" tabindex="-1"></a>        <span class="op">|</span> i <span class="op">==</span> j <span class="ot">=</span> Map.insert (i,j) (emptyData i) table <span class="co">-- O(R)</span></span>
+<span id="cb17-24"><a href="#cb17-24" aria-hidden="true" tabindex="-1"></a>        <span class="op">|</span> i <span class="op">&lt;</span> j <span class="ot">=</span> Map.insert (i,j) best table <span class="kw">where</span></span>
+<span id="cb17-25"><a href="#cb17-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-26"><a href="#cb17-26" aria-hidden="true" tabindex="-1"></a>            <span class="co">-- O(R)</span></span>
+<span id="cb17-27"><a href="#cb17-27" aria-hidden="true" tabindex="-1"></a>            indLeft <span class="ot">=</span> indices <span class="op">$</span> table <span class="op">!</span> (i,i)</span>
+<span id="cb17-28"><a href="#cb17-28" aria-hidden="true" tabindex="-1"></a>            indNext <span class="ot">=</span> indices <span class="op">$</span> table <span class="op">!</span> (i<span class="op">+</span><span class="dv">1</span>,j)</span>
+<span id="cb17-29"><a href="#cb17-29" aria-hidden="true" tabindex="-1"></a>            symdiff <span class="ot">=</span> (indLeft \\ indNext) <span class="op">&lt;&gt;</span> (indNext \\ indLeft)</span>
+<span id="cb17-30"><a href="#cb17-30" aria-hidden="true" tabindex="-1"></a>            cspaceij <span class="ot">=</span> tspace symdiff</span>
+<span id="cb17-31"><a href="#cb17-31" aria-hidden="true" tabindex="-1"></a>            </span>
+<span id="cb17-32"><a href="#cb17-32" aria-hidden="true" tabindex="-1"></a>            <span class="co">-- O(N)</span></span>
+<span id="cb17-33"><a href="#cb17-33" aria-hidden="true" tabindex="-1"></a>            splits <span class="ot">=</span> [((i,k),(k<span class="op">+</span><span class="dv">1</span>,j)) <span class="op">|</span> k <span class="ot">&lt;-</span> [i<span class="op">..</span>j<span class="op">-</span><span class="dv">1</span>]]</span>
+<span id="cb17-34"><a href="#cb17-34" aria-hidden="true" tabindex="-1"></a>            getData (l,r) <span class="ot">=</span> (table <span class="op">!</span> l, table <span class="op">!</span> r)</span>
+<span id="cb17-35"><a href="#cb17-35" aria-hidden="true" tabindex="-1"></a>            parenthesizations <span class="ot">=</span> <span class="fu">map</span> (contract <span class="op">.</span> getData) splits</span>
+<span id="cb17-36"><a href="#cb17-36" aria-hidden="true" tabindex="-1"></a>            best <span class="ot">=</span> argmin totalCost parenthesizations</span>
+<span id="cb17-37"><a href="#cb17-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-38"><a href="#cb17-38" aria-hidden="true" tabindex="-1"></a>            <span class="co">-- O(1)</span></span>
+<span id="cb17-39"><a href="#cb17-39" aria-hidden="true" tabindex="-1"></a>            <span class="co">-- get contraction data of combining two intermediate tensors</span></span>
+<span id="cb17-40"><a href="#cb17-40" aria-hidden="true" tabindex="-1"></a><span class="ot">            contract ::</span> (<span class="dt">TensorData</span>, <span class="dt">TensorData</span>) <span class="ot">-&gt;</span> <span class="dt">TensorData</span></span>
+<span id="cb17-41"><a href="#cb17-41" aria-hidden="true" tabindex="-1"></a>            contract (left,right) <span class="ot">=</span> <span class="dt">TensorData</span> {</span>
+<span id="cb17-42"><a href="#cb17-42" aria-hidden="true" tabindex="-1"></a>                totalCost <span class="ot">=</span> totalCost left <span class="op">+</span> totalCost right <span class="op">+</span> sqrtCspaces,</span>
+<span id="cb17-43"><a href="#cb17-43" aria-hidden="true" tabindex="-1"></a>                recipe <span class="ot">=</span> <span class="dt">Intermediate</span> (recipe left) (recipe right),</span>
+<span id="cb17-44"><a href="#cb17-44" aria-hidden="true" tabindex="-1"></a>                cspace <span class="ot">=</span> cspaceij,</span>
+<span id="cb17-45"><a href="#cb17-45" aria-hidden="true" tabindex="-1"></a>                indices <span class="ot">=</span> symdiff</span>
+<span id="cb17-46"><a href="#cb17-46" aria-hidden="true" tabindex="-1"></a>            } <span class="kw">where</span></span>
+<span id="cb17-47"><a href="#cb17-47" aria-hidden="true" tabindex="-1"></a>                cspaces <span class="ot">=</span> cspace left <span class="op">*</span> cspace right <span class="op">*</span> cspaceij</span>
+<span id="cb17-48"><a href="#cb17-48" aria-hidden="true" tabindex="-1"></a>                sqrtCspaces <span class="ot">=</span> <span class="fu">round</span> <span class="op">.</span> <span class="fu">sqrt</span> <span class="op">.</span> <span class="fu">fromIntegral</span> <span class="op">$</span> cspaces</span></code></pre></div>
+<p>As a sanity check, we can evaluate the same matrix chain we started with:</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>main <span class="ot">=</span> <span class="kw">do</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> tensors <span class="ot">=</span> V.fromList <span class="op">$</span> <span class="fu">map</span> (Map.fromList) [</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>                [(<span class="dv">1</span>,<span class="dv">4</span>),(<span class="dv">2</span>,<span class="dv">3</span>)],</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>                [(<span class="dv">2</span>,<span class="dv">3</span>),(<span class="dv">3</span>,<span class="dv">5</span>)],</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>                [(<span class="dv">3</span>,<span class="dv">5</span>),(<span class="dv">4</span>,<span class="dv">2</span>)],</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>                [(<span class="dv">4</span>,<span class="dv">2</span>),(<span class="dv">5</span>,<span class="dv">4</span>)],</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>                [(<span class="dv">5</span>,<span class="dv">4</span>),(<span class="dv">6</span>,<span class="dv">3</span>)],</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>                [(<span class="dv">6</span>,<span class="dv">3</span>),(<span class="dv">7</span>,<span class="dv">2</span>)]</span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>            ]</span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>        matrices <span class="ot">=</span> [<span class="dv">4</span>,<span class="dv">3</span>,<span class="dv">5</span>,<span class="dv">2</span>,<span class="dv">4</span>,<span class="dv">3</span>,<span class="dv">2</span>]</span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">putStrLn</span> <span class="op">.</span> <span class="fu">show</span> <span class="op">.</span> chainM <span class="op">$</span> matrices <span class="co">-- 102</span></span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">putStrLn</span> <span class="op">.</span> <span class="fu">show</span> <span class="op">.</span> totalCost <span class="op">.</span> chainT <span class="op">$</span> tensors <span class="co">-- 102</span></span></code></pre></div>
+    </section>
+</article>
+
+    </main>
+    <div id="footer">
+        <small><a href="../rss.xml">RSS</a></small>
+        <small><a href="../atom.xml">Atom</a></small>
+        <small>&copy; Copyright 2026, David Anekstein</small>
+    </div>
+
+    <script>
+        const menuToggle = document.getElementById('menu-toggle');
+        const navigation = document.getElementById('navigation');
+        
+        menuToggle.addEventListener('click', function() {
+            navigation.classList.toggle('open');
+            menuToggle.classList.toggle('open');
+        });
+    </script>
+</body>
+
+</html>

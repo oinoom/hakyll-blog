@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Solving the Block Puzzle</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <article>
+    <h1>Solving the Block Puzzle</h1>
+
+    <!-- ============================================================
+         SECTION 1: INTRODUCTION
+         ============================================================ -->
+    <section id="introduction">
+      <h2>Background</h2>
+      <p>
+        <!-- TODO: Background + setup.
+             - What the Soma cube is: 7 polycubes, 3x3x3 target.
+             - Short history: Piet Hein (1933), popularized by Martin Gardner.
+             - The hook: simple rules, huge search space.
+             - The punchline: 240 unique solutions when rotations + reflections
+               are considered equivalent (480 if reflections are distinct).
+             - Define the variant we solve: fixed 7 pieces, no extra blocks.
+             - Establish terms: piece, orientation, placement, solution.
+             - Code snippet idea: quick diagram or list of the 7 pieces. -->
+      </p>
+
+      <!-- Interactive: Show the assembled cube in wood color -->
+      <figure class="interactive">
+        <div id="viz-intro-cube" class="canvas-container">
+          <canvas id="intro-canvas"></canvas>
+        </div>
+        <figcaption>Seven wooden pieces that fit together into a perfect cube. Drag to rotate, <span class="mouse-hint">scroll</span><span class="touch-hint">spread</span> to explode.</figcaption>
+      </figure>
+    </section>
+
+    <!-- ============================================================
+         SECTION 2: HIGH-LEVEL APPROACH
+         ============================================================ -->
+    <section id="high-level-approach">
+      <h2>High-Level Approach</h2>
+      <p>
+        <!-- TODO: One-paragraph overview of the solver pipeline.
+             - Represent pieces as coordinates.
+             - Generate all orientations (cube rotations + dedupe).
+             - Backtracking search: place pieces, recurse, backtrack.
+             - Symmetry handling: canonicalize to avoid counting duplicates.
+             - Visualize and browse solutions interactively.
+             - Code snippet idea: 10-line "main loop" summary. -->
+      </p>
+      <p>
+        <!-- TODO: Optional flow diagram / bullet list for the pipeline.
+             1) Define pieces
+             2) Precompute orientations
+             3) Precompute placements
+             4) Search (backtracking)
+             5) Deduplicate symmetries
+             6) Serialize + visualize -->
+      </p>
+    </section>
+
+    <!-- ============================================================
+         SECTION 3: DATA REPRESENTATION
+         ============================================================ -->
+    <section id="pieces">
+      <h2>Data Representation</h2>
+      <p>
+        <!-- TODO: Explain how the pieces and grid are encoded.
+             - Each piece is a small list of (x, y, z) coordinates.
+             - Six 4-cube pieces + one 3-cube piece = 27 cubes total.
+             - Two pieces are chiral (mirror images of each other).
+             - The cube grid is 3x3x3; consistent axis ordering matters.
+             - Code snippet idea: the `PIECES` constant or equivalent. -->
+      </p>
+      <p>
+        <!-- TODO: Representation details that matter for the solver.
+             - Orientation sets are precomputed per piece.
+             - A placement is a translated orientation + a bitmask.
+             - Solutions are stored as (piece_id, absolute coords).
+             - Code snippet idea: "placement struct" and "solution format." -->
+      </p>
+      <h3>Piece Encoding</h3>
+      <p>
+        <!-- TODO: Show how a piece is stored as a list of cubes.
+             - Why origin-normalized coordinates are convenient.
+             - Mention that orientation generation re-normalizes. -->
+      </p>
+      <h3>Grid Encoding</h3>
+      <p>
+        <!-- TODO: Describe the 3x3x3 grid representation.
+             - 3D array for display vs 1D index for hashing.
+             - Indexing order (x-major, then y, then z). -->
+      </p>
+      <h3>Placement Encoding</h3>
+      <p>
+        <!-- TODO: Explain a placement as "piece orientation + translation".
+             - Include the occupied bitmask.
+             - Why we cache these instead of recomputing. -->
+      </p>
+
+      <!-- Interactive: Show all 7 pieces -->
+      <figure class="interactive">
+        <div id="viz-pieces" class="canvas-container">
+          <canvas id="pieces-canvas"></canvas>
+        </div>
+        <figcaption>The seven pieces. Each must be placed exactly once. Drag to rotate.</figcaption>
+      </figure>
+    </section>
+
+    <!-- ============================================================
+         SECTION 4: THE SEARCH SPACE
+         ============================================================ -->
+    <section id="search-space">
+      <h2>How Big is the Search Space?</h2>
+      <p>
+        <!-- TODO: Walk through the combinatorics.
+             - 24 cube rotations, but symmetric pieces have fewer.
+             - Each orientation has many possible translations.
+             - Naive upper bound is enormous; pruning is mandatory.
+             - Why we need heuristics + symmetry reduction.
+             - Code snippet idea: short table of orientation counts per piece. -->
+      </p>
+
+      <h3>Rotations of a Cube</h3>
+      <p>
+        <!-- TODO: Explain the 24 orientations of a cube.
+             - 6 faces × 4 rotations per face = 24
+             - Visual showing a piece in multiple orientations
+             - Code snippet idea: rotation functions table. -->
+      </p>
+
+      <!-- Interactive: Show one piece rotating through orientations -->
+      <figure class="interactive">
+        <div id="viz-rotations" class="canvas-container">
+          <canvas id="rotations-canvas"></canvas>
+        </div>
+        <div class="controls">
+          <div class="solution-nav">
+            <button id="prev-rotation" class="nav-btn" aria-label="Previous orientation">←</button>
+            <span id="rotation-label">Orientation 1 / 24</span>
+            <button id="next-rotation" class="nav-btn" aria-label="Next orientation">→</button>
+          </div>
+        </div>
+        <figcaption>A single piece has up to 24 distinct orientations. Use arrows to cycle through them.</figcaption>
+      </figure>
+
+      <h3>Symmetry Reduction</h3>
+      <p>
+        <!-- TODO: Symmetry in two places.
+             - Piece symmetry: some rotations are identical.
+             - Solution symmetry: rotations/reflections of a full cube are the same.
+             - Chiral pair swaps under reflection; how that affects counting.
+             - Code snippet idea: canonicalization function overview. -->
+      </p>
+    </section>
+
+    <!-- ============================================================
+         SECTION 5: THE CORE ALGORITHM
+         ============================================================ -->
+    <section id="algorithm">
+      <h2>Core Algorithm</h2>
+      <p>
+        <!-- TODO: Introduce backtracking as a systematic search.
+             - "Place a piece, recurse; if you get stuck, undo and try next."
+             - Think of it as a search tree with pruning.
+             - Code snippet idea: a compact recursive or iterative loop. -->
+      </p>
+
+      <h3>The Core Loop</h3>
+      <p>
+        <!-- TODO: Pseudocode or prose description of the algorithm.
+             1. Find the first empty cell (canonical ordering).
+             2. For each remaining piece:
+             3. For each valid placement that covers that cell:
+             4. If it fits, add it and recurse.
+             5. If the grid is full, record a solution.
+             6. Backtrack and continue. -->
+      </p>
+      <p>
+        <!-- TODO: Clarify state transitions.
+             - What the frame/state contains (placed pieces, remaining pieces, occupied mask).
+             - Why "first empty cell" is both a heuristic and a canonical order.
+             - Code snippet idea: the state struct and backtracking step. -->
+      </p>
+
+      <!-- Interactive: Step-through visualization of backtracking -->
+      <figure class="interactive">
+        <div id="viz-backtrack" class="canvas-container">
+          <canvas id="backtrack-canvas"></canvas>
+        </div>
+        <div class="controls">
+          <input type="range" id="backtrack-slider" min="0" max="100" value="0">
+        </div>
+      </figure>
+
+      <h3>Why "First Empty Cell"?</h3>
+      <p>
+        <!-- TODO: Explain the heuristic.
+             - Guarantees we fill cells in order
+             - Avoids permutations that only differ by placement order
+             - Lets us precompute placements by target cell
+             - Helps with symmetry pruning of partial states -->
+      </p>
+
+      <h3>Deduping During Search</h3>
+      <p>
+        <!-- TODO: Explain partial-state pruning.
+             - Canonicalize partial placements.
+             - Hash set of seen states.
+             - Prevents exploring rotationally equivalent branches. -->
+      </p>
+    </section>
+
+    <!-- ============================================================
+         SECTION 6: MAKING IT FAST
+         ============================================================ -->
+    <section id="optimizations">
+      <h2>Making It Fast</h2>
+      <p>
+        <!-- TODO: Transition: "The naive algorithm works, but it is slow."
+             - Emphasize that the optimizations make the solver practical.
+             - Cite performance in terms of tens/hundreds of ms (release build).
+             - Code snippet idea: before/after micro-optimization summary. -->
+      </p>
+
+      <h3>Bitmask Collision Detection</h3>
+      <p>
+        <!-- TODO: Explain the bitmask representation.
+             - 27 cells → 27 bits in a u32
+             - Each piece placement is a precomputed bitmask
+             - Collision check: (occupied & piece_mask) != 0
+             - Single CPU instruction vs nested loops
+             - Code snippet idea: bitmask check in the hot loop. -->
+      </p>
+
+      <h3>Precomputed Placement Tables</h3>
+      <p>
+        <!-- TODO: Explain precomputation.
+             - For each piece, for each cell, for each orientation:
+               store the bitmask and coordinates
+             - Trade memory for speed
+             - Eliminates runtime coordinate math
+             - Code snippet idea: building the placement table. -->
+      </p>
+
+      <h3>Eliminating Duplicate Solutions</h3>
+      <p>
+        <!-- TODO: Explain canonical forms.
+             - A solution can be rotated 24 ways
+             - Reflections also count as the same solution (with chiral swap)
+             - Canonical form = lexicographically smallest symmetry
+             - Hash set of seen canonical keys
+             - Code snippet idea: canonicalization across rotations/reflections. -->
+      </p>
+
+      <h3>Other Micro-Optimizations</h3>
+      <p>
+        <!-- TODO: Optional: list smaller optimizations.
+             - Fixed-size arrays to reduce allocations.
+             - Precomputed rotation tables.
+             - Fast hashing for grid keys.
+             - Iterative stack vs recursion (if applicable). -->
+      </p>
+
+      <!-- Interactive: Show the same solution in multiple rotations -->
+      <figure class="interactive">
+        <div id="viz-canonical" class="canvas-container">
+          <canvas id="canonical-canvas"></canvas>
+        </div>
+        <div class="controls">
+          <label>
+            Rotation
+            <input type="range" id="canonical-slider" min="0" max="23" value="0">
+            <span id="canonical-label">1 / 24</span>
+          </label>
+        </div>
+        <figcaption>These are all the same solution, just rotated. We only count it once.</figcaption>
+      </figure>
+    </section>
+
+    <!-- ============================================================
+         SECTION 7: THE SOLUTIONS
+         ============================================================ -->
+    <section id="solutions">
+      <h2>All 240 Solutions</h2>
+      <p>
+        <!-- TODO: Present the result.
+             - "After all that, there are exactly 240 unique solutions."
+             - Define unique: rotations + reflections are equivalent.
+             - Mention 480 if reflections are counted separately.
+             - Invite the reader to explore the gallery.
+             - Code snippet idea: load solutions + pagination controls. -->
+      </p>
+
+      <!-- Interactive: The main visualization - one solution, rotatable, explodable -->
+      <figure class="interactive">
+        <div id="viz-solution" class="canvas-container">
+          <canvas id="solution-canvas"></canvas>
+        </div>
+        <div class="controls">
+          <div class="solution-nav">
+            <button id="prev-solution" class="nav-btn" aria-label="Previous solution">←</button>
+            <span id="solution-label">Solution 1 of 240</span>
+            <button id="next-solution" class="nav-btn" aria-label="Next solution">→</button>
+          </div>
+        </div>
+        <figcaption>Drag to rotate, <span class="mouse-hint">scroll</span><span class="touch-hint">spread</span> to explode.</figcaption>
+      </figure>
+    </section>
+
+    <!-- ============================================================
+         SECTION 8: CONCLUSION
+         ============================================================ -->
+    <section id="conclusion">
+      <h2>What We Learned</h2>
+      <p>
+        <!-- TODO: Wrap up.
+             - Systematic search can solve huge spaces with the right pruning.
+             - Data representation (bitmasks, canonical keys) changes everything.
+             - Symmetry reduction turns brute force into something elegant.
+             - Encourage readers to build their own variants.
+             - Code snippet idea: "try it yourself" with a custom shape. -->
+      </p>
+
+      <h3>Further Reading</h3>
+      <ul>
+        <!-- TODO: Add links
+             - Soma cube Wikipedia
+             - The original Soma cube manual / history
+             - Knuth's Dancing Links (exact cover)
+             - Polycube enumeration / symmetry references
+             - Aswin van Woudenberg's Soma cube blog post -->
+      </ul>
+
+      <h3>The Code</h3>
+      <p>
+        <!-- TODO: Link to GitHub repo -->
+      </p>
+    </section>
+
+  </article>
+
+  <script src="js/base.js"></script>
+  <script src="js/solutions-data.js"></script>
+  <script src="js/blocker.js"></script>
+</body>
+</html>
