@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="only light">
+    <title>To Be Determined - Home</title>
+    <link rel="stylesheet" href="./css/default.css" />
+    <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="alternate" type="application/rss+xml" title="David Anekstein's blog - To Be Determined" href="./rss.xml">
+    <link rel="alternate" type="application/atom+xml" title="David Anekstein's blog - To Be Determined" href="./atom.xml">
+</head>
+
+<body class>
+    <div id="header">
+        <div id="logo">
+            <a href="./">To Be Determined</a>
+        </div>
+        <button id="menu-toggle" aria-label="Toggle navigation">☰</button>
+        <div id="navigation">
+            <a href="./posts.html">Posts</a>
+            <a href="./projects.html">Projects</a>
+            <a href="./publications.html">Publications</a>
+            <a href="./about.html">About</a>
+        </div>
+    </div>
+
+    <main role="main">
+        <section class="home-intro">
+    <p>My personal blog where I delve into whatever seems interesting! You can find a history of my posts <a href="./posts.html">here</a>.</p>
+</section>
+
+<section class="home-roll">
+    
+    <article class="home-post has-media home-post--interactive">
+        <div class="home-post-copy">
+            <h2 class="home-post-title">
+                <a href="./posts/2026-02-01-blocker.html">Solving Soma
+</a>
+            </h2>
+            <div class="info">Posted on February  1, 2026</div>
+            <div class="home-post-preview">
+                <p>Years ago in New York City’s Bryant park I came across a pop up store that sold puzzles, one of which was this wooden cube. I didn’t know what it was back then, but simplicity of the puzzle and the feel of the wooden blocks was attractive to me and so I bought it.</p>
+            </div>
+        </div>
+        <a class="home-post-media home-post-media--interactive" href="./posts/2026-02-01-blocker.html" aria-hidden="true" tabindex="-1"><span class="home-soma-preview" data-home-soma-preview><canvas class="home-soma-preview__canvas" aria-hidden="true"></canvas><img class="home-soma-preview__fallback" src="./posts/blocker/images/fallback-intro.png" alt></span></a>
+    </article>
+    
+    <article class="home-post has-media">
+        <div class="home-post-copy">
+            <h2 class="home-post-title">
+                <a href="./posts/2025-03-26.html">Matrix Profiles 
+</a>
+            </h2>
+            <div class="info">Posted on March 26, 2025</div>
+            <div class="home-post-preview">
+                <p>Lately I’ve been thinking about time series analysis to aid in <a href="https://apps.apple.com/us/app/reflect-track-anything/id6463800032">Reflect’s</a> insights features. Towards this end, I’ve had a Hacker News <a href="https://news.ycombinator.com/item?id=42609595">thread</a> about anomaly detection bookmarked in <a href="https://apps.apple.com/us/app/later-set-intentions/id6742691976">Later</a>. I finally got to looking at it and there was a comment that mentioned the article left out <a href="https://www.cs.ucr.edu/~eamonn/MatrixProfile.html">matrix profiles</a>, which I had never heard of, so I decided to look into them.</p>
+            </div>
+        </div>
+        <a class="home-post-media" href="./posts/2025-03-26.html" aria-hidden="true" tabindex="-1"><img src="./images/mp-series.jpg" alt></a>
+    </article>
+    
+    <article class="home-post">
+        <div class="home-post-copy">
+            <h2 class="home-post-title">
+                <a href="./posts/2023-06-12.html">Exploring Dataflow Analysis in the Rust Compiler 
+</a>
+            </h2>
+            <div class="info">Posted on June 12, 2023</div>
+            <div class="home-post-preview">
+                <p>Recently I’ve been working in static analysis land and as a part of that have been familiarizing myself with data flow analysis. I look at a fair amount of MIR and so decided to delve into the <code>rustc_mir_dataflow</code> crate to see how these things are handled in the rust compiler. There is a helpful introduction to this topic in the <a href="https://rustc-dev-guide.rust-lang.org/mir/dataflow.html"><code>rustc dev guide</code></a>, and this post fleshes things out a bit.</p>
+            </div>
+        </div>
+        
+    </article>
+    
+    <article class="home-post">
+        <div class="home-post-copy">
+            <h2 class="home-post-title">
+                <a href="./posts/2022-07-31.html">Generic Recursion Applied to Algebraic Graphs
+</a>
+            </h2>
+            <div class="info">Posted on July 31, 2022</div>
+            <div class="home-post-preview">
+                <p>It would be such a shame if I couldn’t combine Rust, recursion schemes, and graphs into one blog post (with the added bonus of leaving out C++). So here we go!</p>
+            </div>
+        </div>
+        
+    </article>
+    
+    <article class="home-post">
+        <div class="home-post-copy">
+            <h2 class="home-post-title">
+                <a href="./posts/2022-03-04.html">Discovering I've Shot Myself in the Foot with std::async
+</a>
+            </h2>
+            <div class="info">Posted on March  4, 2022</div>
+            <div class="home-post-preview">
+                <p>I was recently looking into implementing some
+speculative execution functionality using <code>std::async</code>; based on some seed data,
+the goal was to asynchronously run a compute-intensive calculation
+where the result may or may not be needed at a later time. When new seed
+data became available, it was an indication that any
+in-progress computation should be terminated early and that
+its result be considered defunct.</p>
+            </div>
+        </div>
+        
+    </article>
+    
+    <article class="home-post has-media">
+        <div class="home-post-copy">
+            <h2 class="home-post-title">
+                <a href="./posts/2020-08-09.html">Tensor Chain Contraction with Refolds
+</a>
+            </h2>
+            <div class="info">Posted on August  9, 2020</div>
+            <div class="home-post-preview">
+                <p>In a <a href="./posts/2019-11-15.html">previous post</a> we utilized recursion schemes in prototyping a genetic algorithms library. I wanted to look more into their use cases and was happy to discover that they could even be leveraged for dynamic programming.</p>
+            </div>
+        </div>
+        <a class="home-post-media" href="./posts/2020-08-09.html" aria-hidden="true" tabindex="-1"><img src="./images/5.png" alt></a>
+    </article>
+    
+    <article class="home-post has-media">
+        <div class="home-post-copy">
+            <h2 class="home-post-title">
+                <a href="./posts/2019-11-15.html">Prototyping a Small Genetic Algorithms Library in
+Haskell
+</a>
+            </h2>
+            <div class="info">Posted on November 15, 2019</div>
+            <div class="home-post-preview">
+                <p><em>This post assumes a basic understanding of genetic algorithms and the
+terminology associated with them, as well as a cursory understanding of
+recursion schemes; resources for both may be found scattered within the
+post. All source code can be found
+<a href="https://github.com/oinoom/gabble">here</a>.</em></p>
+            </div>
+        </div>
+        <a class="home-post-media" href="./posts/2019-11-15.html" aria-hidden="true" tabindex="-1"><img src="./images/progress.png" alt></a>
+    </article>
+    
+</section>
+
+<script src="./posts/blocker/js/base.js"></script>
+<script src="./posts/blocker/js/solutions-data.js"></script>
+<script src="./posts/blocker/js/blocker.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        if (!window.BlockerHomePreview) return;
+
+        document.querySelectorAll('[data-home-soma-preview]').forEach(function (preview) {
+            window.BlockerHomePreview.mountSomaScrollPreview(preview, {
+                scrollOrbitAmount: 0.72
+            });
+        });
+    });
+</script>
+
+    </main>
+    <div id="footer">
+        <small><a href="./rss.xml">RSS</a></small>
+        <small><a href="./atom.xml">Atom</a></small>
+        <small>&copy; Copyright 2026, David Anekstein</small>
+    </div>
+
+    <script>
+        const menuToggle = document.getElementById('menu-toggle');
+        const navigation = document.getElementById('navigation');
+        
+        menuToggle.addEventListener('click', function() {
+            navigation.classList.toggle('open');
+            menuToggle.classList.toggle('open');
+        });
+    </script>
+</body>
+
+</html>
