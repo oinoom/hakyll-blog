@@ -1,0 +1,678 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="only light">
+    <title>To Be Determined - Search over Algebraic Graphs</title>
+    <link rel="stylesheet" href="../css/default.css" />
+    
+    <link rel="stylesheet" href="../css/algebraic-dijkstra.css?v=queue-fit-1" />
+    
+    <script>
+        window.MathJax = {
+            messageStyle: 'none',
+            showProcessingMessages: false
+        };
+    </script>
+    <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="alternate" type="application/rss+xml" title="David Anekstein's blog - To Be Determined" href="./rss.xml">
+    <link rel="alternate" type="application/atom+xml" title="David Anekstein's blog - To Be Determined" href="./atom.xml">
+</head>
+
+<body class="algebraic-page">
+    <div id="header">
+        <div id="logo">
+            <a href="../">To Be Determined</a>
+        </div>
+        <button id="menu-toggle" aria-label="Toggle navigation">☰</button>
+        <div id="navigation">
+            <a href="../posts.html">Posts</a>
+            <a href="../projects.html">Projects</a>
+            <a href="../publications.html">Publications</a>
+            <a href="../about.html">About</a>
+        </div>
+    </div>
+
+    <main role="main">
+        <article>
+    <section class="header">
+        <h1>Search over Algebraic Graphs</h1>
+        <div class="info">
+            Posted on August 22, 2026
+            
+                by David Anekstein
+            
+        </div>
+        
+        <div class="info post-tags">
+            Tags: <a title="All pages tagged 'graphs'." href="../tags/graphs.html" rel="tag">graphs</a>, <a title="All pages tagged 'algorithms'." href="../tags/algorithms.html" rel="tag">algorithms</a>, <a title="All pages tagged 'haskell'." href="../tags/haskell.html" rel="tag">haskell</a>
+        </div>
+        
+    </section>
+    <section>
+        <p>In my post <em>Generic Recursion Applied to Algebraic Graphs</em><a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a> we explored how we can leverage recursion schemes to perform basic operations on a graph data structure. In that post, as well as in the <code>alga</code> library itself<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>, algorithms on graphs were facilitated by first converting the algebraic graph representation into an adjacency map and performing the algorithms on that data structure. In <em>Algebraic Graphs with Class</em><a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a>, Andrey Mokhov described a desire to perform algorithms such as search on the algebraic graph representation itself.</p>
+<p>In this post, we will explore just that and outline a way to conduct Dijkstra’s algorithm over the same algebraic representation <code>alga</code> uses, without first constructing an adjacency map. The algorithm will run in <span class="math inline">\(O(s \log s)\)</span> time, where <span class="math inline">\(s\)</span> is the size of the algebraic graph expression.</p>
+<h2 id="algebraic-graphs-redux">Algebraic Graphs Redux</h2>
+<div class="figure-flow">
+<p>As a reminder, <code>alga</code> defines an algebraic graph as something similar to following data type. This time, it has labeled (weighted) edges:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">Graph</span> w v</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="ot">=</span> <span class="dt">Empty</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span> <span class="dt">Vertex</span> v</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span> <span class="dt">Overlay</span> (<span class="dt">Graph</span> w v) (<span class="dt">Graph</span> w v)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span> <span class="dt">Connect</span> w (<span class="dt">Graph</span> w v) (<span class="dt">Graph</span> w v)</span></code></pre></div>
+<figure class="figure-pair figure-pair--overview figure--right" id="expression-and-graph">
+<a href="../images/algebraic/1-tree.svg?v=clean-assets-1">
+<img src="../images/algebraic/1-tree.svg?v=clean-assets-1" width="420" height="400" decoding="async" alt>
+</a>
+<a href="../images/algebraic/1-graph.svg?v=clean-assets-1">
+<img src="../images/algebraic/1-graph.svg?v=clean-assets-1" width="131" height="252" decoding="async" alt>
+</a>
+<figcaption>
+Overlay (Connect 1 (Vertex a) (Overlay (Vertex c) (Vertex b))) (Connect 2 (Vertex b) (Vertex d))
+</figcaption>
+</figure>
+<p>The challenge we have is to conduct algorithms over the description of the graph, and not the graph itself; expanding the graph prior to a search would require materializing all edges, which is <span class="math inline">\(O(n^2)\)</span>, and we’d lose out on the benefits of many algorithms that are sub quadratic in the number of vertices.</p>
+<p>Rather than rehash the basics, let’s focus on perhaps the most important constructor, <code class="sourceCode haskell"><span class="dt">Connect</span></code>. For directed graphs, this operation describes a biclique, i.e. a complete directed bipartite subgraph when the vertices are disjoint, which is set of edges stemming from every vertex in the left child graph to every vertex in the right child graph. It can accomplish this using <span class="math inline">\(O
+(1)\)</span> space for itself, and <span class="math inline">\(O(n)\)</span> space for its children, i.e. not proportional to the number of edges, which is <span class="math inline">\(O(n^2)\)</span>. In other words, <code>alga</code>’s representation is a form of graph compression.</p>
+</div>
+<h2 id="graph-compression">Graph Compression</h2>
+<div class="figure-flow">
+<p>The field of graph compression is active and evolving. In <em>Faster Graph Algorithms Through DAG Compression</em><a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a>, Max Bannach, Florian Andreas Marwitz, and Till Tantau (BMT) describe a set of algorithms over a data structure they dubbed a switching graph.</p>
+<p>Before we introduce switching graphs, let’s introduce its building blocks. BMT define a cluster DAG <span class="math inline">\(C = (V', A)\)</span> as a DAG whose sinks are exactly the set of vertices <span class="math inline">\(V\)</span> in the graph <span class="math inline">\(G\)</span> it describes. A vertex <span class="math inline">\(v' \in V'\)</span> describes a so-called cluster <span class="math inline">\(C(v')\)</span>, which represents the subset of sinks that are reachable from that vertex. A cluster <span class="math inline">\(C(v)\)</span> where <span class="math inline">\(v\in V\)</span> is trivially the set <span class="math inline">\(\{v\}\)</span>. <span class="math inline">\(A\)</span> represents the set of directed edges in the cluster DAG and are called cluster edges.</p>
+<p>Building on top of cluster DAGs, a DAG compression is a graph <span class="math inline">\(D = (V', A, E')\)</span> where <span class="math inline">\(V'\)</span> and <span class="math inline">\(A\)</span> are the same vertex and edge sets as in the cluster DAG <span class="math inline">\(C\)</span>. <span class="math inline">\(E' \subseteq V' \times V'\)</span> is an additional edge relation. If <span class="math inline">\((u', v')\)</span> is in <span class="math inline">\(E'\)</span>, then the set of edges <span class="math inline">\(C(u') \times C(v')\)</span> is in <span class="math inline">\(G\)</span>. This is a complete bipartite graph with directed edges from all sinks (vertices in <span class="math inline">\(G\)</span>) reachable from <span class="math inline">\(u'\)</span> to all reachable from <span class="math inline">\(v'\)</span>.</p>
+<figure class="outline-figure figure--right" id="dag-compression-relations">
+<a href="../images/algebraic/2-dag-relations.svg?v=clean-assets-1">
+<img src="../images/algebraic/2-dag-relations.svg?v=clean-assets-1" width="660" height="556" loading="lazy" decoding="async" alt>
+</a>
+</figure>
+</div>
+<div class="figure-flow">
+<p>This may seem slightly familiar. <code>alga</code>’s <code class="sourceCode haskell"><span class="dt">Connect</span> w x y</code> adds edges <span class="math inline">\(V(x) \times V(y)\)</span> to the parent graph <span class="math inline">\(G'\)</span>, which is the cross product of all vertices in child graph <code class="sourceCode haskell">x</code> and all vertices in child graph <code class="sourceCode haskell">y</code>, unioned with the edges in <code class="sourceCode haskell">x</code> and <code class="sourceCode haskell">y</code>. Given that all trees are DAGs, if we consider the node for child graph <code class="sourceCode haskell">x</code> to be a cluster node <span class="math inline">\(x'\)</span>, and the node for child graph <code class="sourceCode haskell">y</code> to be a cluster node <span class="math inline">\(y'\)</span>, then we can see that the set of vertices in <span class="math inline">\(G\)</span> described by <span class="math inline">\(V(x)\)</span> equals the set of vertices described by <span class="math inline">\(C(x')\)</span>, and likewise for <span class="math inline">\(V(y)\)</span> and <span class="math inline">\(C(y')\)</span>. The cross product <span class="math inline">\(V(x) \times V(y)\)</span> therefore describes the same set of edges as <span class="math inline">\(C(x') \times C(y')\)</span>. To convert an <code>alga</code> expression into a DAG compression, we contribute each edge from an <code class="sourceCode haskell"><span class="dt">Overlay</span></code> or <code class="sourceCode haskell"><span class="dt">Connect</span></code> node to its child to <span class="math inline">\(A\)</span>, and we contribute an edge <span class="math inline">\((x', y')\)</span> for each <code class="sourceCode haskell"><span class="dt">Connect</span> w x' y'</code>, which represents <span class="math inline">\(C(x') \times C(y')\)</span>, to <span class="math inline">\(E'\)</span>.</p>
+<p>One missing piece in reducing an <code>alga</code> expression to a DAG compression is that there is no limit to the number of leaf <code class="sourceCode haskell"><span class="dt">Vertex</span></code> constructors that can denote the same logical vertex <span class="math inline">\(v\)</span>. In a cluster DAG, as mentioned earlier, the set of sinks is exactly <span class="math inline">\(V\)</span>. To fully reduce a tree compression to a DAG compression, all logically equivalent <code class="sourceCode haskell"><span class="dt">Vertex</span> v</code> constructors must be consolidated into one node. We can discard subexpressions that contain no vertices, such as <code class="sourceCode haskell"><span class="dt">Empty</span></code> or <code class="sourceCode haskell"><span class="dt">Overlay</span> <span class="dt">Empty</span> <span class="dt">Empty</span></code>, and not carry them to the DAG representation. Lastly, because <code>alga</code> expressions can outline multiedges due to duplicate node occurrences, we can handle those by taking the minimum weighted edge. This is okay for the purposes of SSSP because we will always take the edge that costs less for any shortest path.</p>
+<figure class="outline-figure figure--compact figure--float figure--right" id="compression-construction">
+<a href="../images/algebraic/2-tree-to-dag.gif?v=simultaneous-compression-1">
+<img src="../images/algebraic/2-tree-to-dag.gif?v=simultaneous-compression-1" width="672" height="447" loading="lazy" decoding="async" alt>
+</a>
+<figcaption>
+Expression tree to DAG compression
+</figcaption>
+</figure>
+</div>
+<script defer src="../images/algebraic/animations.js?v=responsive-figures-1"></script>
+<script type="module" src="../images/algebraic/neighbors.js?v=lowercase-hint-1"></script>
+<h3 id="switching-graphs">Switching graphs</h3>
+<p>Now that we’ve identified the relationship between <code>alga</code> expressions and DAG compressions, we can move onto the data structure that enables efficient search, which is the switching graph.</p>
+<div class="figure-flow">
+<p>The switching graph is an augmentation of the DAG compression that allows a search to traverse backwards through parent-child directed edges in order to establish reachability and distances between vertices in <span class="math inline">\(G\)</span>. To accomplish this, BMT duplicate all vertices <span class="math inline">\(V'\)</span> except for the vertices representing <span class="math inline">\(V\)</span>. The original, copied vertex <span class="math inline">\(x'\in V'\setminus V\)</span> is an <strong><span class="switching-upper">upper</span></strong> vertex, a non-copied vertex <span class="math inline">\(v\in V\)</span> is a <strong><span class="switching-middle">middle</span></strong> vertex, and a copy <span class="math inline">\(\overline{x'}\)</span> is a <strong><span class="switching-lower">lower</span></strong> vertex. For all <strong><span class="switching-middle">middle</span></strong> vertices, <span class="math inline">\(\bar v=v\)</span>. Edges <span class="math inline">\((\overline{y'}, \overline{x'})\)</span> are added to the switching graph for every parent-child edge <span class="math inline">\((x', y') \in A\)</span>. Semantically, they represent climbing back up to ancestor cluster nodes. For every compressed edge <span class="math inline">\((x', y')\)</span> in <span class="math inline">\(E'\)</span>, the compressed edge is removed and a switching edge is added in the switching graph from node <span class="math inline">\(\overline{x'}\)</span> to node <span class="math inline">\(y'\)</span>. The source <span class="math inline">\(\overline{x'}\)</span> can either be a <strong><span class="switching-lower">lower</span></strong> node or a <strong><span class="switching-middle">middle</span></strong> node, and the destination <span class="math inline">\(y'\)</span> can either be a <strong><span class="switching-middle">middle</span></strong> or <strong><span class="switching-upper">upper</span></strong> node, depending on whether or not the endpoints belong to <span class="math inline">\(V\)</span>. Traversing those switching edges incurs a switching cost <span class="math inline">\(w\)</span>.</p>
+<figure class="outline-figure figure--compact figure--right" id="switching-graph">
+<a href="../images/algebraic/6-paper.svg?v=clean-assets-1">
+<img src="../images/algebraic/6-paper.svg?v=clean-assets-1" width="360" height="488" loading="lazy" decoding="async" alt>
+</a>
+</figure>
+<p>BMT prove that there is no loss of search or distance semantics when performing those algorithms over the switching graph compared to the original graph <span class="math inline">\(G\)</span>. They prove that these algorithms run over the switching graph, which is <span class="math inline">\(O(s)\)</span>, without needing to decompress the representation and generate the same SSSP as the search would on <span class="math inline">\(G\)</span>.</p>
+</div>
+<h2 id="dijkstras-for-alga-expressions">Dijkstra’s for <code>alga</code> expressions</h2>
+<div class="figure-flow">
+<p>Consequently, we can perform a search over the <code>alga</code> expression without decompressing it into an adjacency map, as the <code>alga</code> library does today. However, in the spirit of performing as much of the algorithm on the <code class="sourceCode haskell"><span class="dt">Graph</span></code> expression as possible, we will not be constructing a separate switching graph. Instead, we will perform the search over a lazily-generated frontier of search states and visit nodes of the expression.</p>
+<figure class="outline-figure figure--compact figure--float figure--right" id="switching-construction" data-animation>
+<a href="../images/algebraic/6-build.gif?v=vertical-copies-1">
+<img id="switching-construction-image" src="../images/algebraic/6-build.gif?v=vertical-copies-1" data-animation-src="/images/algebraic/6-build.gif?v=vertical-copies-1" data-animation-poster="/images/algebraic/6-folded.svg?v=clean-assets-1" width="876" height="732" loading="lazy" decoding="async" alt>
+</a>
+<figcaption>
+Expression tree to DAG compression to switching graph to folded switching tree
+</figcaption>
+</figure>
+<p>To support this, we’re going to traverse the expression and create an index that caches some important information about the graph. Unlike an adjacency map, this construction will not be proportional to the number of edges in <span class="math inline">\(G\)</span>:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>makeBaseFunctor ['<span class="dt">'Graph</span>]</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">Weight</span> w <span class="ot">=</span> (<span class="dt">Ord</span> w, <span class="dt">Num</span> w)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">Vertex</span> v <span class="ot">=</span> <span class="dt">Ord</span> v</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">NodeId</span> <span class="ot">=</span> <span class="dt">Int</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">Index</span> w v <span class="ot">=</span> <span class="dt">Index</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  {<span class="ot"> parentOf      ::</span> <span class="dt">IntMap</span> <span class="dt">NodeId</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>  ,<span class="ot"> occurrencesOf ::</span> <span class="dt">Map</span> v [<span class="dt">NodeId</span>]</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>  ,<span class="ot"> nodeFor       ::</span> <span class="dt">IntMap</span> (<span class="dt">GraphF</span> w v <span class="dt">NodeId</span>)</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>  }</span></code></pre></div>
+<p>First, the obvious; the index stores the parent of every node other than the root. Every node in the graph expression will be assigned an integer <code class="sourceCode haskell"><span class="dt">NodeId</span></code>. What’s not obvious are the purposes of <code class="sourceCode haskell">occurrencesOf</code> and <code class="sourceCode haskell">nodeFor</code>; because there are no restrictions on how many times a vertex <span class="math inline">\(v\)</span> can appear as <code class="sourceCode haskell"><span class="dt">Vertex</span> v</code> in the graph, there may be more than one. So, we want to track which node ids those occurrences correspond to, which are inserted into <code>occurrencesOf</code>. For convenience, and for <code class="sourceCode haskell"><span class="dt">Connect</span></code> and <code class="sourceCode haskell"><span class="dt">Overlay</span></code> constructors, we’d like a way to quickly retrieve the node ids of their children; that is the purpose of <code class="sourceCode haskell">nodeFor</code>. This way, the node ids are available to us directly as we traverse the expression.</p>
+</div>
+<p>You may have wondered what <code class="sourceCode haskell"><span class="dt">GraphF</span> w v <span class="dt">NodeId</span></code> is and why it’s separate from <code class="sourceCode haskell"><span class="dt">Graph</span></code>. This is the derived functor implementation of <code class="sourceCode haskell"><span class="dt">Graph</span></code> from an invocation to <code class="sourceCode haskell">makeBaseFunctor ['<span class="dt">'Graph</span>]</code>, provided by Haskell’s recursion scheme library. I’ve talked about recursion schemes a few times before, so won’t review that here. The important part is that recursion schemes allow us to separate recursion from the logic of our transformations. Here is what the <code class="sourceCode haskell"><span class="dt">GraphF</span></code> functor looks like:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">GraphF</span> w v r</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="ot">=</span> <span class="dt">EmptyF</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span> <span class="dt">VertexF</span> v</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span> <span class="dt">OverlayF</span> r r</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span> <span class="dt">ConnectF</span> w r r</span></code></pre></div>
+<p>When we traverse the algebraic graph expression and reach a <code class="sourceCode haskell"><span class="dt">Connect</span></code> or <code class="sourceCode haskell"><span class="dt">Overlay</span></code> node, its children are going to be supplied to us as node ids in a <code class="sourceCode haskell"><span class="dt">GraphF</span> w v <span class="dt">NodeId</span></code> layer, which will be placed into the <code class="sourceCode haskell">nodeFor</code> map and whose ids are going to be inserted into the <code>parentOf</code> map.</p>
+<p>To build the index, we’re going to keep track of some state, namely the next node id and current index. We’ll build the computation that calculates the next state as we fold the expression tree in a bottom up fashion, using the state monad, and execute our index builder with a counter that begins from zero:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">Indexing</span> w v <span class="ot">=</span> <span class="dt">State</span> (<span class="dt">Int</span>, <span class="dt">Index</span> w v) <span class="dt">NodeId</span></span></code></pre></div>
+<p>Our state monad is a function that allocates an id, indexes the current node, and yields that node’s id. To build the index, we’ll fold the tree bottom up using the <code class="sourceCode haskell">cata</code> recursion scheme. It invokes a helper function, called <code class="sourceCode haskell">indexAlg</code>, which breaks down the tree layer by layer.</p>
+<p>At each layer, we sequence the computations of children and insert the result into the <code class="sourceCode haskell">nodeFor</code> map. If the current node is a <code class="sourceCode haskell"><span class="dt">VertexF</span> v</code> then sequencing it is a no-op, and so <code class="sourceCode haskell"><span class="dt">VertexF</span> v</code> is inserted into the map as well. The sequenced children of <code class="sourceCode haskell"><span class="dt">Connect</span></code> and <code class="sourceCode haskell"><span class="dt">Overlay</span></code> become registered in the <code>parentOf</code> map, pointing to the current node’s id. Lastly, if the current node is a <code class="sourceCode haskell"><span class="dt">Vertex</span> v</code>, we add the node’s id into the occurrence list for <code class="sourceCode haskell">v</code>.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- allocates a new node id</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="ot">fresh ::</span> <span class="dt">State</span> (<span class="dt">Int</span>, <span class="dt">Index</span> w v) <span class="dt">NodeId</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>fresh <span class="ot">=</span> <span class="kw">do</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  (n, <span class="fu">index</span>) <span class="ot">&lt;-</span> get</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  put (n <span class="op">+</span> <span class="dv">1</span>, <span class="fu">index</span>)</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pure</span> n</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="ot">indexAlg ::</span> <span class="dt">Vertex</span> v <span class="ot">=&gt;</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a> <span class="dt">GraphF</span> w v (<span class="dt">Indexing</span> w v) <span class="ot">-&gt;</span> <span class="dt">Indexing</span> w v</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>indexAlg actions <span class="ot">=</span> <span class="kw">do</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>  layer <span class="ot">&lt;-</span> <span class="fu">sequenceA</span> actions</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>  nodeId <span class="ot">&lt;-</span> fresh</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>  <span class="co">-- maps a function over the Index portion of the current state</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>  <span class="kw">let</span> record <span class="ot">=</span> modify <span class="op">.</span> second</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>  <span class="co">-- updates the index's records</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>  record <span class="op">$</span> \<span class="fu">index</span> <span class="ot">-&gt;</span> <span class="fu">index</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>    { nodeFor       <span class="ot">=</span> IM.insert nodeId layer (nodeFor <span class="fu">index</span>)</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>    , parentOf      <span class="ot">=</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>        <span class="fu">foldr</span> (<span class="ot">`IM.insert`</span> nodeId)</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>          (parentOf <span class="fu">index</span>)</span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>          (toList layer)</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>    , occurrencesOf <span class="ot">=</span> <span class="kw">case</span> layer <span class="kw">of</span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>        <span class="dt">VertexF</span> v <span class="ot">-&gt;</span></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>          M.insertWith (<span class="op">++</span>) v [nodeId] (occurrencesOf <span class="fu">index</span>)</span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>        _         <span class="ot">-&gt;</span> occurrencesOf <span class="fu">index</span></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pure</span> nodeId</span></code></pre></div>
+<p>You can think of this process as building one large tree of computations that we don’t execute until we’re done describing it from bottom to top. When we’re done folding the graph expression, we’ll be left with an action that we can then execute to retrieve the final <code class="sourceCode haskell">(<span class="dt">Int</span>, <span class="dt">Index</span> w v)</code> pair and grab the completed index with <code class="sourceCode haskell"><span class="fu">snd</span></code>.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ot">emptyIndex ::</span> <span class="dt">Index</span> w v</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>emptyIndex <span class="ot">=</span> <span class="dt">Index</span> IM.empty M.empty IM.empty</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="ot">buildIndex ::</span> <span class="dt">Vertex</span> v <span class="ot">=&gt;</span> <span class="dt">Graph</span> w v <span class="ot">-&gt;</span> <span class="dt">Index</span> w v</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>buildIndex g <span class="ot">=</span> <span class="fu">snd</span> (execState (cata indexAlg g) (<span class="dv">0</span>, emptyIndex))</span></code></pre></div>
+<p>With the index built, we can now efficiently reference nodes in the expression and run Dijkstra’s. As mentioned, BMT run Dijkstra’s directly over the switching graph. In our case, we will run it over a lazily-generated frontier of neighboring search states:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">SearchState</span> v</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="ot">=</span> <span class="dt">Up</span> <span class="dt">NodeId</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span> <span class="dt">Down</span> <span class="dt">NodeId</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span> <span class="dt">At</span> v</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">deriving</span> (<span class="dt">Eq</span>, <span class="dt">Ord</span>, <span class="dt">Show</span>)</span></code></pre></div>
+<div class="figure-flow">
+<p>When reading the BMT paper, I thought that the terminology was a bit confusing. I’m used to looking at DAGs from sources at the top to sinks at the bottom. Same with trees. As mentioned earlier, in the BMT switching graph, copies of the parents that we move to are considered <strong><span class="switching-lower">lower</span></strong> nodes. This is counterintuitive to me! So in the <code class="sourceCode haskell"><span class="dt">SearchState</span></code>, <code class="sourceCode haskell"><span class="dt">Down</span></code> will represent visiting a node’s child, <code class="sourceCode haskell"><span class="dt">Up</span></code> will represent visiting its parent, and <code class="sourceCode haskell"><span class="dt">At</span> v</code> will represent visiting a <code class="sourceCode haskell"><span class="dt">Vertex</span> v</code>.</p>
+<figure class="outline-figure figure--right" id="switching-moves">
+<a href="../images/algebraic/3-legend.svg?v=clean-assets-1">
+<img src="../images/algebraic/3-legend.svg?v=clean-assets-1" width="616" height="359" loading="lazy" decoding="async" alt>
+</a>
+</figure>
+</div>
+<div class="figure-flow">
+<p>Our search will traverse the expression and, for each node in the expression, generate <code class="sourceCode haskell"><span class="dt">SearchState</span></code> neighbors that indicate the next state. Let’s start with the simplest case to understand, moving down from a node:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- given the index and a node id, move downward from the</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="co">-- corresponding node</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="ot">descend ::</span> <span class="dt">Index</span> w v <span class="ot">-&gt;</span> <span class="dt">NodeId</span> <span class="ot">-&gt;</span> [<span class="dt">SearchState</span> v]</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>descend <span class="fu">index</span> n <span class="ot">=</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">case</span> nodeFor <span class="fu">index</span> <span class="op">IM.!</span> n <span class="kw">of</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">EmptyF</span> <span class="ot">-&gt;</span> []</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">VertexF</span> v <span class="ot">-&gt;</span> [<span class="dt">At</span> v]</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>    _ <span class="ot">-&gt;</span> [<span class="dt">Down</span> n]</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>downNeighbors</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a><span class="ot">  ::</span> <span class="dt">Weight</span> w</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>  <span class="ot">=&gt;</span> <span class="dt">Index</span> w v <span class="ot">-&gt;</span> <span class="dt">NodeId</span> <span class="ot">-&gt;</span> [(w, <span class="dt">SearchState</span> v)]</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>downNeighbors <span class="fu">index</span> n <span class="ot">=</span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>  [ (<span class="dv">0</span>, s) <span class="co">-- descending to a node costs nothing</span></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span> child <span class="ot">&lt;-</span> toList (nodeFor <span class="fu">index</span> <span class="op">IM.!</span> n)</span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>  , s <span class="ot">&lt;-</span> descend <span class="fu">index</span> child</span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>  ]</span></code></pre></div>
+<p><code class="sourceCode haskell">descend</code> gives us the downward state representation of a node <code class="sourceCode haskell">n</code>. If we’re at a <code class="sourceCode haskell"><span class="dt">Vertex</span> v</code>, then we’re <code class="sourceCode haskell"><span class="dt">At</span> v</code>. If we’re at a <code class="sourceCode haskell"><span class="dt">Connect</span></code> or <code class="sourceCode haskell"><span class="dt">Overlay</span></code> node, the corresponding search state is <code class="sourceCode haskell"><span class="dt">Down</span></code>.</p>
+<p>Given the index and a node id, <code class="sourceCode haskell">downNeighbors</code> converts the children of a node to a list and, for each child, converts that child to its search state form. Traveling to that child costs nothing because it does not represent traversing a real, weighted edge.</p>
+<figure class="outline-figure figure--compact figure--left" id="down-neighbors" data-neighbors="Down" data-neighbor-initial="Down:3" data-neighbor-diagram="/images/algebraic/3-neighbors.svg?v=clean-assets-1">
+<a href="../images/algebraic/3-step-down.svg?v=clean-assets-1">
+<img src="../images/algebraic/3-step-down.svg?v=clean-assets-1" width="444" height="359" loading="lazy" decoding="async" alt>
+</a>
+</figure>
+</div>
+<p>Only traversing through a <code class="sourceCode haskell"><span class="dt">Connect</span></code> node represents crossing a weighted edge, and so incurs a cost when moving up from its left child and down to its right. The <code class="sourceCode haskell">upNeighbors</code> function covers this case:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>upNeighbors</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="ot">  ::</span> <span class="dt">Weight</span> w</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="ot">=&gt;</span> <span class="dt">Index</span> w v <span class="ot">-&gt;</span> <span class="dt">NodeId</span> <span class="ot">-&gt;</span> [(w, <span class="dt">SearchState</span> v)]</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>upNeighbors <span class="fu">index</span> n <span class="ot">=</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">case</span> IM.lookup n (parentOf <span class="fu">index</span>) <span class="kw">of</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">Nothing</span> <span class="ot">-&gt;</span> []</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">Just</span> p <span class="ot">-&gt;</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>      <span class="kw">case</span> nodeFor <span class="fu">index</span> <span class="op">IM.!</span> p <span class="kw">of</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>        <span class="co">-- crossing a connect node is only valid from the left child</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>        <span class="co">-- because the graph is directed from l to r</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>        <span class="dt">ConnectF</span> w l r <span class="op">|</span> n <span class="op">==</span> l <span class="ot">-&gt;</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>          (<span class="dv">0</span>, <span class="dt">Up</span> p) <span class="op">:</span> [ (w, s) <span class="op">|</span> s <span class="ot">&lt;-</span> descend <span class="fu">index</span> r ]</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>        _ <span class="ot">-&gt;</span> [(<span class="dv">0</span>, <span class="dt">Up</span> p)]</span></code></pre></div>
+<p>Put simply, if the current node has a parent <code class="sourceCode haskell"><span class="dt">Connect</span></code>, and the current node is the left child of it, then in addition to marking the parent as a neighbor, we mark the right child of the parent <code class="sourceCode haskell"><span class="dt">Connect</span></code> node as a neighbor with plans to descend to it. The cost of this visitation is <span class="math inline">\(w\)</span>. Every other neighbor is <code class="sourceCode haskell"><span class="dt">Up</span></code> with no cost associated with it.</p>
+<div class="figure-flow">
+<p>Finally, we want a special function for visiting neighbors from a <code class="sourceCode haskell"><span class="dt">Vertex</span></code> in the expression tree, i.e. from the search state <code class="sourceCode haskell"><span class="dt">At</span></code>. You may have thought to yourself that <code class="sourceCode haskell">upNeighbors</code> should cover this case. The reason we don’t use this directly is because, given that there can be more than one <code class="sourceCode haskell"><span class="dt">Vertex</span> v</code> in the expression tree, we need <em>all</em> possible upward neighbors from that search state:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>atNeighbors</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="ot">  ::</span> (<span class="dt">Weight</span> w, <span class="dt">Vertex</span> v)</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="ot">=&gt;</span> <span class="dt">Index</span> w v <span class="ot">-&gt;</span> v <span class="ot">-&gt;</span> [(w, <span class="dt">SearchState</span> v)]</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>atNeighbors <span class="fu">index</span> v <span class="ot">=</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">concatMap</span> (upNeighbors <span class="fu">index</span>)</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    (M.findWithDefault [] v (occurrencesOf <span class="fu">index</span>))</span></code></pre></div>
+<figure class="outline-figure figure--compact figure--right" id="at-neighbors" data-neighbors="Up" data-neighbor-initial="At:a" data-neighbor-diagram="/images/algebraic/3-neighbors.svg?v=clean-assets-1">
+<a href="../images/algebraic/3-step-at.svg?v=clean-assets-1">
+<img src="../images/algebraic/3-step-at.svg?v=clean-assets-1" width="444" height="359" loading="lazy" decoding="async" alt>
+</a>
+</figure>
+</div>
+<p>All of the above make up one <code class="sourceCode haskell">neighbors</code> function, which is going to be the canonical neighbors function used in our Dijkstra search:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>neighbors</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="ot">  ::</span> (<span class="dt">Weight</span> w, <span class="dt">Vertex</span> v)</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="ot">=&gt;</span> <span class="dt">Index</span> w v <span class="ot">-&gt;</span> <span class="dt">SearchState</span> v <span class="ot">-&gt;</span> [(w, <span class="dt">SearchState</span> v)]</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>neighbors <span class="fu">index</span> (<span class="dt">Up</span> n) <span class="ot">=</span> upNeighbors <span class="fu">index</span> n</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>neighbors <span class="fu">index</span> (<span class="dt">Down</span> n) <span class="ot">=</span> downNeighbors <span class="fu">index</span> n</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>neighbors <span class="fu">index</span> (<span class="dt">At</span> v) <span class="ot">=</span> atNeighbors <span class="fu">index</span> v</span></code></pre></div>
+<div class="figure-flow">
+<p>We can now define <code class="sourceCode haskell">dijkstra</code> using the familiar construction; we keep a distance map that doubles as the <code class="sourceCode haskell">seen</code> set, and a priority <code class="sourceCode haskell">queue</code> of <code class="sourceCode haskell">(w, <span class="dt">SearchState</span> v)</code> using Haskell’s <code class="sourceCode haskell"><span class="dt">Set</span></code>, which gives us a convenient <code class="sourceCode haskell">minView</code> function.</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="ot">dijkstra ::</span> (<span class="dt">Weight</span> w, <span class="dt">Vertex</span> v)</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="ot">=&gt;</span> <span class="dt">Index</span> w v <span class="ot">-&gt;</span> v <span class="ot">-&gt;</span> <span class="dt">Map</span> v w</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>dijkstra <span class="fu">index</span> start <span class="ot">=</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>  go (Set.singleton (<span class="dv">0</span>, <span class="dt">At</span> start)) M.empty</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>    go queue distances <span class="ot">=</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>      <span class="kw">case</span> Set.minView queue <span class="kw">of</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>        <span class="dt">Nothing</span> <span class="ot">-&gt;</span> vertexDistances distances</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>        <span class="dt">Just</span> ((d, next), rest)</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>          <span class="op">|</span> M.member next distances <span class="ot">-&gt;</span> go rest distances</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>          <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">-&gt;</span></span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>              <span class="kw">let</span> relax (cost, neighbor) <span class="ot">=</span></span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>                    Set.insert (d <span class="op">+</span> cost, neighbor)</span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>                  newQueue <span class="ot">=</span></span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">foldr</span> relax rest (neighbors <span class="fu">index</span> next)</span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>                  newDistances <span class="ot">=</span> M.insert next d distances</span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>               <span class="kw">in</span> go newQueue newDistances</span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- grab only distances from vertices in G,</span></span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- i.e. At search states</span></span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>    vertexDistances distances <span class="ot">=</span></span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>      M.fromList [ (v, d) <span class="op">|</span> (<span class="dt">At</span> v, d) <span class="ot">&lt;-</span> M.toList distances ]</span></code></pre></div>
+<p>To refresh your memory of Dijkstra’s algorithm, we set up a queue prioritized by minimum distance to a particular node, pop that value and, if unvisited, get its neighbors and insert them into the queue. Something different about this implementation is that we do not gate insertion of neighbors into the priority queue based on whether or not we’ve already visited the search state; the neighbors are inserted into the queue regardless. What makes this okay is the line <code class="sourceCode haskell">M.member next distances <span class="ot">-&gt;</span> go rest distances</code>, which gates at the pop step rather than at the push step. As a consequence, we pay a minor penalty of having the queue ignore values already seen.</p>
+<figure class="outline-figure figure--compact figure--float figure--right" id="search-animation" data-animation data-search-player data-search-src="/images/algebraic/4-search.json?v=controls-2">
+<a href="../images/algebraic/4-search.gif?v=controls-2">
+<img src="../images/algebraic/4-search.gif?v=controls-2" data-animation-src="/images/algebraic/4-search.gif?v=controls-2" data-animation-poster="/images/algebraic/4-search-start.svg?v=controls-2" width="984" height="750" loading="lazy" decoding="async" alt>
+</a>
+</figure>
+</div>
+<script defer src="../images/algebraic/search-player.js?v=queue-fit-1"></script>
+<h2 id="benchmarks">Benchmarks</h2>
+<p>So how does this hold up to the <code class="sourceCode haskell"><span class="dt">AdjacencyMap</span></code> approach that <code>alga</code> takes. Well, it depends on the nature of the input graph. Unsurprisingly, graphs that are most effectively compressed using an <code>alga</code> expression fare best with the switching graph approach. As the ratio of graph size to expression size increases, the switching algorithm’s speedup over the adjacency map approach tends to increase.</p>
+<div class="figure-flow">
+<figure class="outline-figure figure--wide" id="compression-performance" data-benchmark-plot>
+<a href="../images/algebraic/compression-performance.svg">
+<img src="../images/algebraic/compression-performance.svg" width="640" height="460" loading="lazy" decoding="async" alt>
+</a>
+</figure>
+<script defer src="../images/algebraic/benchmark-plot.js?v=1"></script>
+<div id="benchmark-results" class="benchmark-results">
+<div class="benchmark-table-wrap" tabindex="0">
+<table class="benchmark-table" id="benchmark-timings">
+<caption>
+Time (milliseconds)
+</caption>
+<colgroup>
+<col class="benchmark-graph-column">
+<col class="benchmark-value-column benchmark-switching-column">
+<col class="benchmark-value-column benchmark-alga-column">
+<col class="benchmark-value-column benchmark-switching-column">
+<col class="benchmark-value-column benchmark-alga-column">
+</colgroup>
+<thead>
+<tr>
+<th rowspan="2">
+Graph
+</th>
+<th colspan="2">
+Overhead + search (ms)
+</th>
+<th colspan="2">
+Search only (ms)
+</th>
+</tr>
+<tr>
+<th>
+Switching
+</th>
+<th>
+<code>alga</code>
+</th>
+<th>
+Switching
+</th>
+<th>
+<code>alga</code>
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>
+Transitive tournament<a class="footnote-ref" href="#benchmark-transitive-clique-note"><sup>a</sup></a>
+</th>
+<td class="benchmark-winner">
+2.91
+</td>
+<td>
+52.55
+</td>
+<td class="benchmark-winner">
+2.03
+</td>
+<td>
+19.27
+</td>
+</tr>
+<tr>
+<th>
+Complete directed
+</th>
+<td class="benchmark-winner">
+3.99
+</td>
+<td>
+51.96
+</td>
+<td class="benchmark-winner">
+2.43
+</td>
+<td>
+37.24
+</td>
+</tr>
+<tr>
+<th>
+Grouped (5,000)<a class="footnote-ref" href="#benchmark-grouped-note"><sup>b</sup></a>
+</th>
+<td class="benchmark-winner">
+82.98
+</td>
+<td>
+596.74
+</td>
+<td class="benchmark-winner">
+33.14
+</td>
+<td>
+256.34
+</td>
+</tr>
+<tr>
+<th>
+Complete bipartite
+</th>
+<td class="benchmark-winner">
+1.40
+</td>
+<td>
+3.96
+</td>
+<td>
+0.72
+</td>
+<td class="benchmark-winner">
+0.20
+</td>
+</tr>
+<tr>
+<th>
+Layered (20 layers)<a class="footnote-ref" href="#benchmark-layered-note"><sup>c</sup></a>
+</th>
+<td class="benchmark-winner">
+3.51
+</td>
+<td>
+3.61
+</td>
+<td class="benchmark-winner">
+1.96
+</td>
+<td>
+2.00
+</td>
+</tr>
+<tr>
+<th>
+Path
+</th>
+<td>
+3.15
+</td>
+<td class="benchmark-winner">
+0.80
+</td>
+<td>
+1.43
+</td>
+<td class="benchmark-winner">
+0.23
+</td>
+</tr>
+<tr>
+<th>
+Random (20%)<a class="footnote-ref" href="#benchmark-random-note"><sup>d</sup></a>
+</th>
+<td>
+2504.05
+</td>
+<td class="benchmark-winner">
+174.72
+</td>
+<td>
+1292.91
+</td>
+<td class="benchmark-winner">
+15.26
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="benchmark-table-wrap" tabindex="0">
+<table class="benchmark-table" id="benchmark-memory">
+<caption>
+Memory allocated (MB per run)
+</caption>
+<colgroup>
+<col class="benchmark-graph-column">
+<col class="benchmark-value-column benchmark-switching-column">
+<col class="benchmark-value-column benchmark-alga-column">
+<col class="benchmark-value-column benchmark-switching-column">
+<col class="benchmark-value-column benchmark-alga-column">
+</colgroup>
+<thead>
+<tr>
+<th rowspan="2">
+Graph
+</th>
+<th colspan="2">
+Overhead + search (MB)
+</th>
+<th colspan="2">
+Search only (MB)
+</th>
+</tr>
+<tr>
+<th>
+Switching
+</th>
+<th>
+<code>alga</code>
+</th>
+<th>
+Switching
+</th>
+<th>
+<code>alga</code>
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>
+Transitive tournament<a class="footnote-ref" href="#benchmark-transitive-clique-note"><sup>a</sup></a>
+</th>
+<td class="benchmark-winner">
+10.53
+</td>
+<td>
+103.86
+</td>
+<td class="benchmark-winner">
+7.24
+</td>
+<td>
+57.61
+</td>
+</tr>
+<tr>
+<th>
+Complete directed
+</th>
+<td class="benchmark-winner">
+15.21
+</td>
+<td>
+115.79
+</td>
+<td class="benchmark-winner">
+8.54
+</td>
+<td>
+113.66
+</td>
+</tr>
+<tr>
+<th>
+Grouped (5,000)<a class="footnote-ref" href="#benchmark-grouped-note"><sup>b</sup></a>
+</th>
+<td class="benchmark-winner">
+174.38
+</td>
+<td>
+674.32
+</td>
+<td class="benchmark-winner">
+93.29
+</td>
+<td>
+627.95
+</td>
+</tr>
+<tr>
+<th>
+Layered (20 layers)<a class="footnote-ref" href="#benchmark-layered-note"><sup>c</sup></a>
+</th>
+<td>
+12.51
+</td>
+<td class="benchmark-winner">
+7.86
+</td>
+<td class="benchmark-winner">
+6.20
+</td>
+<td>
+6.38
+</td>
+</tr>
+<tr>
+<th>
+Path
+</th>
+<td>
+11.32
+</td>
+<td class="benchmark-winner">
+3.80
+</td>
+<td>
+4.34
+</td>
+<td class="benchmark-winner">
+0.98
+</td>
+</tr>
+<tr>
+<th>
+Complete bipartite
+</th>
+<td>
+6.00
+</td>
+<td class="benchmark-winner">
+1.66
+</td>
+<td>
+2.75
+</td>
+<td class="benchmark-winner">
+0.79
+</td>
+</tr>
+<tr>
+<th>
+Random (20%)<a class="footnote-ref" href="#benchmark-random-note"><sup>d</sup></a>
+</th>
+<td>
+3276.09
+</td>
+<td class="benchmark-winner">
+479.34
+</td>
+<td>
+1713.22
+</td>
+<td class="benchmark-winner">
+28.63
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p class="benchmark-note" id="benchmark-transitive-clique-note">
+<sup>a</sup> A <a href="https://dwest.web.illinois.edu/regs/kpaths.html">transitive tournament</a> has an edge from every vertex to every later vertex in an ordering
+</p>
+<p class="benchmark-note" id="benchmark-grouped-note">
+<sup>b</sup> Ten equal-sized groups joined by randomly chosen, uniformly weighted directed bicliques
+</p>
+<p class="benchmark-note" id="benchmark-layered-note">
+<sup>c</sup> <a href="https://web.cs.unlv.edu/larmore/Courses/CSC477/Problems/layerGrph.html">Layered graphs</a> divide into equal-sized layers, with an edge from every vertex in one layer to every vertex in the next
+</p>
+<p class="benchmark-note" id="benchmark-random-note">
+<sup>d</sup> Random graphs have 1,000 vertices and are expressed edge by edge, with the indicated edge probability, conditioned on strong connectivity. Values are medians across five seeded graphs
+</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p>David Anekstein. <a href="../posts/2022-07-31.html"><em>Generic Recursion Applied to Algebraic Graphs</em></a>. 31 July 2022.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p><a href="https://github.com/snowleopard/alga"><em><code>alga</code>: Algebraic graphs</em></a>. Haskell library.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p>Andrey Mokhov. <a href="https://github.com/snowleopard/alga-paper/releases/download/final/algebraic-graphs.pdf"><em>Algebraic Graphs with Class</em></a>. Haskell Symposium, 2017.<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4"><p>Max Bannach, Florian Andreas Marwitz, and Till Tantau. <a href="https://drops.dagstuhl.de/storage/00lipics/lipics-vol289-stacs2024/LIPIcs.STACS.2024.8/LIPIcs.STACS.2024.8.pdf"><em>Faster Graph Algorithms Through DAG Compression</em></a>. STACS, 2024. Cluster DAGs and DAG compressions: p. 8:6; switching graphs and distance preservation: Definition 3.2 and Theorem 3.4, p. 8:10; weighted-search bound: Theorem 1.6, p. 8:4.<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>
+    </section>
+</article>
+
+    </main>
+    <div id="footer">
+        <small><a href="../rss.xml">RSS</a></small>
+        <small><a href="../atom.xml">Atom</a></small>
+        <small>&copy; Copyright 2026, David Anekstein</small>
+    </div>
+
+    <script>
+        const menuToggle = document.getElementById('menu-toggle');
+        const navigation = document.getElementById('navigation');
+        
+        menuToggle.addEventListener('click', function() {
+            navigation.classList.toggle('open');
+            menuToggle.classList.toggle('open');
+        });
+    </script>
+</body>
+
+</html>

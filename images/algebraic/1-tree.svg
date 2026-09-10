@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="420" height="400" viewBox="-30 -30 420 400" preserveAspectRatio="xMidYMid meet">
+<defs><marker id="paid-arrow" markerWidth="9" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L9,4 L0,8 Z" fill="#6f56c9"/></marker>
+<marker id="arrow-ba743b" markerWidth="9" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L9,4 L0,8 Z" fill="#ba743b"/></marker>
+<marker id="arrow-4c7fa5" markerWidth="9" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L9,4 L0,8 Z" fill="#4c7fa5"/></marker>
+<marker id="arrow-648259" markerWidth="9" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L9,4 L0,8 Z" fill="#648259"/></marker>
+<marker id="arrow-d5dce1" markerWidth="9" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L9,4 L0,8 Z" fill="#d5dce1"/></marker>
+<marker id="arrow-abb5bd" markerWidth="9" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L9,4 L0,8 Z" fill="#abb5bd"/></marker>
+<marker id="arrow-black" markerWidth="9" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L9,4 L0,8 Z" fill="black"/></marker>
+<marker id="arrow-6f56c9" markerWidth="9" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L9,4 L0,8 Z" fill="#4c7fa5"/></marker>
+</defs>
+<rect x="-30" y="-30" width="420" height="400" fill="white"/>
+<line x1="126.4" y1="208.1" x2="99.5" y2="265.0" stroke="black" stroke-width="1"/>
+<line x1="143.6" y1="208.1" x2="170.5" y2="265.0" stroke="black" stroke-width="1"/>
+<line x1="56.7" y1="110.2" x2="14.2" y2="170.0" stroke="black" stroke-width="1"/>
+<line x1="78.3" y1="110.2" x2="123.4" y2="173.7" stroke="black" stroke-width="1"/>
+<line x1="306.6" y1="112.6" x2="279.5" y2="170.0" stroke="black" stroke-width="1"/>
+<line x1="323.4" y1="112.6" x2="350.5" y2="170.0" stroke="black" stroke-width="1"/>
+<line x1="175.4" y1="12.2" x2="82.2" y2="83.7" stroke="black" stroke-width="1"/>
+<line x1="207.1" y1="12.2" x2="300.3" y2="83.7" stroke="black" stroke-width="1"/>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="normal">
+<path d="M -20.0 170.0 h 40 v 40 h -40 Z" fill="white" stroke="none" stroke-width="1.0"/>
+<path d="M -20.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="black" stroke-width="1.2"/>
+<text x="0.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">a</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="normal">
+<path d="M 70.0 265.0 h 40 v 40 h -40 Z" fill="white" stroke="none" stroke-width="1.0"/>
+<path d="M 70.0 265.0 h 40 v 40 h -40 Z" fill="none" stroke="black" stroke-width="1.2"/>
+<text x="90.0" y="285.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">c</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="normal">
+<path d="M 160.0 265.0 h 40 v 40 h -40 Z" fill="white" stroke="none" stroke-width="1.0"/>
+<path d="M 160.0 265.0 h 40 v 40 h -40 Z" fill="none" stroke="black" stroke-width="1.2"/>
+<text x="180.0" y="285.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">b</text>
+</g>
+<g data-constructor="Overlay" data-shape="circle" data-emphasis="normal">
+<path d="M 115.0 190.0 A 20 20 0 1 0 155.0 190.0 A 20 20 0 1 0 115.0 190.0 Z" fill="white" stroke="none" stroke-width="1.0"/>
+<path d="M 115.0 190.0 A 20 20 0 1 0 155.0 190.0 A 20 20 0 1 0 115.0 190.0 Z" fill="none" stroke="black" stroke-width="1.2"/>
+</g>
+<g data-constructor="Connect" data-shape="diamond" data-emphasis="normal">
+<path d="M 67.5 69.0 L 93.5 95.0 L 67.5 121.0 L 41.5 95.0 Z" fill="white" stroke="none" stroke-width="1.0"/>
+<path d="M 67.5 69.0 L 93.5 95.0 L 67.5 121.0 L 41.5 95.0 Z" fill="none" stroke="black" stroke-width="1.2"/>
+<text x="67.5" y="95.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">1</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="normal">
+<path d="M 250.0 170.0 h 40 v 40 h -40 Z" fill="white" stroke="none" stroke-width="1.0"/>
+<path d="M 250.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="black" stroke-width="1.2"/>
+<text x="270.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">b</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="normal">
+<path d="M 340.0 170.0 h 40 v 40 h -40 Z" fill="white" stroke="none" stroke-width="1.0"/>
+<path d="M 340.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="black" stroke-width="1.2"/>
+<text x="360.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">d</text>
+</g>
+<g data-constructor="Connect" data-shape="diamond" data-emphasis="normal">
+<path d="M 315.0 69.0 L 341.0 95.0 L 315.0 121.0 L 289.0 95.0 Z" fill="white" stroke="none" stroke-width="1.0"/>
+<path d="M 315.0 69.0 L 341.0 95.0 L 315.0 121.0 L 289.0 95.0 Z" fill="none" stroke="black" stroke-width="1.2"/>
+<text x="315.0" y="95.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">2</text>
+</g>
+<g data-constructor="Overlay" data-shape="circle" data-emphasis="normal">
+<path d="M 171.2 0.0 A 20 20 0 1 0 211.2 0.0 A 20 20 0 1 0 171.2 0.0 Z" fill="white" stroke="none" stroke-width="1.0"/>
+<path d="M 171.2 0.0 A 20 20 0 1 0 211.2 0.0 A 20 20 0 1 0 171.2 0.0 Z" fill="none" stroke="black" stroke-width="1.2"/>
+</g>
+<g id="constructor-legend">
+<g transform="translate(8.0 350) scale(0.5)">
+<g data-constructor="Overlay" data-shape="circle" data-emphasis="normal">
+<path d="M -20.0 0.0 A 20 20 0 1 0 20.0 0.0 A 20 20 0 1 0 -20.0 0.0 Z" fill="white" stroke="none" stroke-width="1.0"/>
+<path d="M -20.0 0.0 A 20 20 0 1 0 20.0 0.0 A 20 20 0 1 0 -20.0 0.0 Z" fill="none" stroke="black" stroke-width="1.2"/>
+</g>
+</g>
+<text x="26.0" y="350.0" dy="0.35em" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="black">Overlay</text>
+<g transform="translate(135.0 350) scale(0.5)">
+<g data-constructor="Connect" data-shape="diamond" data-emphasis="normal">
+<path d="M 0.0 -26.0 L 26.0 0.0 L 0.0 26.0 L -26.0 0.0 Z" fill="white" stroke="none" stroke-width="1.0"/>
+<path d="M 0.0 -26.0 L 26.0 0.0 L 0.0 26.0 L -26.0 0.0 Z" fill="none" stroke="black" stroke-width="1.2"/>
+</g>
+</g>
+<text x="153.0" y="350.0" dy="0.35em" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="black">Connect</text>
+<g transform="translate(263.0 350) scale(0.5)">
+<g data-constructor="Vertex" data-shape="box" data-emphasis="normal">
+<path d="M -20.0 -20.0 h 40 v 40 h -40 Z" fill="white" stroke="none" stroke-width="1.0"/>
+<path d="M -20.0 -20.0 h 40 v 40 h -40 Z" fill="none" stroke="black" stroke-width="1.2"/>
+</g>
+</g>
+<text x="281.0" y="350.0" dy="0.35em" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="black">Vertex</text>
+</g>
+</svg>

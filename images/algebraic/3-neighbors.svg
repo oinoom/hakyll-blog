@@ -1,0 +1,1132 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="444" height="366" viewBox="-42 -46 444 366" preserveAspectRatio="xMidYMid meet">
+<defs><marker id="paid-arrow" markerWidth="9" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L9,4 L0,8 Z" fill="#6f56c9"/></marker>
+<marker id="arrow-ba743b" markerWidth="9" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L9,4 L0,8 Z" fill="#ba743b"/></marker>
+<marker id="arrow-4c7fa5" markerWidth="9" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L9,4 L0,8 Z" fill="#4c7fa5"/></marker>
+<marker id="arrow-648259" markerWidth="9" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L9,4 L0,8 Z" fill="#648259"/></marker>
+<marker id="arrow-d5dce1" markerWidth="9" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L9,4 L0,8 Z" fill="#d5dce1"/></marker>
+<marker id="arrow-abb5bd" markerWidth="9" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L9,4 L0,8 Z" fill="#abb5bd"/></marker>
+<marker id="arrow-black" markerWidth="9" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L9,4 L0,8 Z" fill="black"/></marker>
+<marker id="arrow-6f56c9" markerWidth="9" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L9,4 L0,8 Z" fill="#4c7fa5"/></marker>
+</defs>
+<rect x="-42" y="-46" width="444" height="366" fill="white"/>
+<g data-neighbor-scene="Down:3" data-neighbor-targets="At:c@0 At:b@0" aria-hidden="true" display="none">
+<line x1="126.4" y1="208.1" x2="99.5" y2="265.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="143.6" y1="208.1" x2="170.5" y2="265.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="56.7" y1="110.2" x2="14.2" y2="170.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="78.3" y1="110.2" x2="123.4" y2="173.7" stroke="#d5dce1" stroke-width="1"/>
+<line x1="306.6" y1="112.6" x2="279.5" y2="170.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="323.4" y1="112.6" x2="350.5" y2="170.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="175.4" y1="12.2" x2="82.2" y2="83.7" stroke="#d5dce1" stroke-width="1"/>
+<line x1="207.1" y1="12.2" x2="300.3" y2="83.7" stroke="#d5dce1" stroke-width="1"/>
+<g data-move="Down"><path data-lane="Down" d="M 126.44 208.07 L 99.47 265.00" fill="none" stroke="#4c7fa5" stroke-width="2.5" stroke-linecap="round" marker-end="url(#arrow-4c7fa5)"/>
+</g><g data-move="Down"><path data-lane="Down" d="M 143.56 208.07 L 170.53 265.00" fill="none" stroke="#4c7fa5" stroke-width="2.5" stroke-linecap="round" marker-end="url(#arrow-4c7fa5)"/>
+</g><path data-pointer="left" d="M 95.0 175.0 L 103.0 180.0 L 95.0 185.0 Z" fill="black"/>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M -20.0 170.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M -20.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="0.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">a</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="active">
+<path d="M 70.0 265.0 h 40 v 40 h -40 Z" fill="#b4cea5" stroke="none" stroke-width="1.0"/>
+<path d="M 70.0 265.0 h 40 v 40 h -40 Z" fill="none" stroke="black" stroke-width="2.4"/>
+<text x="90.0" y="285.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">c</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="active">
+<path d="M 160.0 265.0 h 40 v 40 h -40 Z" fill="#b4cea5" stroke="none" stroke-width="1.0"/>
+<path d="M 160.0 265.0 h 40 v 40 h -40 Z" fill="none" stroke="black" stroke-width="2.4"/>
+<text x="180.0" y="285.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">b</text>
+</g>
+<g data-constructor="Overlay" data-shape="circle" data-emphasis="active">
+<path d="M 115.0 190.0 A 20 20 0 1 0 155.0 190.0 A 20 20 0 1 0 115.0 190.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 115.0 190.0 A 20 20 0 0 1 155.0 190.0 Z" fill="#6e9fc7" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 115.0 190.0 A 20 20 0 0 0 155.0 190.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 115.0 190.0 A 20 20 0 1 0 155.0 190.0 A 20 20 0 1 0 115.0 190.0 Z" fill="none" stroke="black" stroke-width="2.4"/>
+<line x1="115.0" y1="190.0" x2="155.0" y2="190.0" stroke="black" stroke-width="1"/>
+</g>
+<g data-constructor="Connect" data-shape="diamond" data-emphasis="context">
+<path d="M 67.5 69.0 L 93.5 95.0 L 67.5 121.0 L 41.5 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 41.5 95.0 L 67.5 69.0 L 93.5 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 41.5 95.0 L 67.5 121.0 L 93.5 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 67.5 69.0 L 93.5 95.0 L 67.5 121.0 L 41.5 95.0 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<line x1="41.5" y1="95.0" x2="93.5" y2="95.0" stroke="#abb5bd" stroke-width="1"/>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 250.0 170.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 250.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="270.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">b</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 340.0 170.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 340.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="360.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">d</text>
+</g>
+<g data-constructor="Connect" data-shape="diamond" data-emphasis="context">
+<path d="M 315.0 69.0 L 341.0 95.0 L 315.0 121.0 L 289.0 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 289.0 95.0 L 315.0 69.0 L 341.0 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 289.0 95.0 L 315.0 121.0 L 341.0 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 315.0 69.0 L 341.0 95.0 L 315.0 121.0 L 289.0 95.0 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<line x1="289.0" y1="95.0" x2="341.0" y2="95.0" stroke="#abb5bd" stroke-width="1"/>
+</g>
+<g data-constructor="Overlay" data-shape="circle" data-emphasis="context">
+<path d="M 171.2 0.0 A 20 20 0 1 0 211.2 0.0 A 20 20 0 1 0 171.2 0.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 171.2 0.0 A 20 20 0 0 1 211.2 0.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 171.2 0.0 A 20 20 0 0 0 211.2 0.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 171.2 0.0 A 20 20 0 1 0 211.2 0.0 A 20 20 0 1 0 171.2 0.0 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<line x1="171.2" y1="0.0" x2="211.2" y2="0.0" stroke="#abb5bd" stroke-width="1"/>
+</g>
+</g>
+<g data-neighbor-scene="Up:3" data-neighbor-targets="Up:4@0" aria-hidden="true" display="none">
+<line x1="126.4" y1="208.1" x2="99.5" y2="265.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="143.6" y1="208.1" x2="170.5" y2="265.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="56.7" y1="110.2" x2="14.2" y2="170.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="78.3" y1="110.2" x2="123.4" y2="173.7" stroke="#d5dce1" stroke-width="1"/>
+<line x1="306.6" y1="112.6" x2="279.5" y2="170.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="323.4" y1="112.6" x2="350.5" y2="170.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="175.4" y1="12.2" x2="82.2" y2="83.7" stroke="#d5dce1" stroke-width="1"/>
+<line x1="207.1" y1="12.2" x2="300.3" y2="83.7" stroke="#d5dce1" stroke-width="1"/>
+<g data-move="Up"><path data-lane="Up" d="M 123.42 173.70 L 78.30 110.20" fill="none" stroke="#ba743b" stroke-width="2.5" stroke-linecap="round" marker-end="url(#arrow-ba743b)"/>
+</g><path data-pointer="left" d="M 95.0 195.0 L 103.0 200.0 L 95.0 205.0 Z" fill="black"/>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M -20.0 170.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M -20.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="0.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">a</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 70.0 265.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 70.0 265.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="90.0" y="285.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">c</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 160.0 265.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 160.0 265.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="180.0" y="285.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">b</text>
+</g>
+<g data-constructor="Overlay" data-shape="circle" data-emphasis="active">
+<path d="M 115.0 190.0 A 20 20 0 1 0 155.0 190.0 A 20 20 0 1 0 115.0 190.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 115.0 190.0 A 20 20 0 0 1 155.0 190.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 115.0 190.0 A 20 20 0 0 0 155.0 190.0 Z" fill="#db924f" stroke="none" stroke-width="1.0"/>
+<path d="M 115.0 190.0 A 20 20 0 1 0 155.0 190.0 A 20 20 0 1 0 115.0 190.0 Z" fill="none" stroke="black" stroke-width="2.4"/>
+<line x1="115.0" y1="190.0" x2="155.0" y2="190.0" stroke="black" stroke-width="1"/>
+</g>
+<g data-constructor="Connect" data-shape="diamond" data-emphasis="active">
+<path d="M 67.5 69.0 L 93.5 95.0 L 67.5 121.0 L 41.5 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 41.5 95.0 L 67.5 69.0 L 93.5 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 41.5 95.0 L 67.5 121.0 L 93.5 95.0 Z" fill="#db924f" stroke="none" stroke-width="1.0"/>
+<path d="M 67.5 69.0 L 93.5 95.0 L 67.5 121.0 L 41.5 95.0 Z" fill="none" stroke="black" stroke-width="2.4"/>
+<line x1="41.5" y1="95.0" x2="93.5" y2="95.0" stroke="black" stroke-width="1"/>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 250.0 170.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 250.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="270.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">b</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 340.0 170.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 340.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="360.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">d</text>
+</g>
+<g data-constructor="Connect" data-shape="diamond" data-emphasis="context">
+<path d="M 315.0 69.0 L 341.0 95.0 L 315.0 121.0 L 289.0 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 289.0 95.0 L 315.0 69.0 L 341.0 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 289.0 95.0 L 315.0 121.0 L 341.0 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 315.0 69.0 L 341.0 95.0 L 315.0 121.0 L 289.0 95.0 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<line x1="289.0" y1="95.0" x2="341.0" y2="95.0" stroke="#abb5bd" stroke-width="1"/>
+</g>
+<g data-constructor="Overlay" data-shape="circle" data-emphasis="context">
+<path d="M 171.2 0.0 A 20 20 0 1 0 211.2 0.0 A 20 20 0 1 0 171.2 0.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 171.2 0.0 A 20 20 0 0 1 211.2 0.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 171.2 0.0 A 20 20 0 0 0 211.2 0.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 171.2 0.0 A 20 20 0 1 0 211.2 0.0 A 20 20 0 1 0 171.2 0.0 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<line x1="171.2" y1="0.0" x2="211.2" y2="0.0" stroke="#abb5bd" stroke-width="1"/>
+</g>
+</g>
+<g data-neighbor-scene="Down:4" data-neighbor-targets="At:a@0 Down:3@0" aria-hidden="true" display="none">
+<line x1="126.4" y1="208.1" x2="99.5" y2="265.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="143.6" y1="208.1" x2="170.5" y2="265.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="56.7" y1="110.2" x2="14.2" y2="170.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="78.3" y1="110.2" x2="123.4" y2="173.7" stroke="#d5dce1" stroke-width="1"/>
+<line x1="306.6" y1="112.6" x2="279.5" y2="170.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="323.4" y1="112.6" x2="350.5" y2="170.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="175.4" y1="12.2" x2="82.2" y2="83.7" stroke="#d5dce1" stroke-width="1"/>
+<line x1="207.1" y1="12.2" x2="300.3" y2="83.7" stroke="#d5dce1" stroke-width="1"/>
+<g data-move="Down"><path data-lane="Down" d="M 56.70 110.20 L 14.21 170.00" fill="none" stroke="#4c7fa5" stroke-width="2.5" stroke-linecap="round" marker-end="url(#arrow-4c7fa5)"/>
+</g><g data-move="Down"><path data-lane="Down" d="M 78.30 110.20 L 123.42 173.70" fill="none" stroke="#4c7fa5" stroke-width="2.5" stroke-linecap="round" marker-end="url(#arrow-4c7fa5)"/>
+</g><path data-pointer="left" d="M 27.5 80.0 L 35.5 85.0 L 27.5 90.0 Z" fill="black"/>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="active">
+<path d="M -20.0 170.0 h 40 v 40 h -40 Z" fill="#b4cea5" stroke="none" stroke-width="1.0"/>
+<path d="M -20.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="black" stroke-width="2.4"/>
+<text x="0.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">a</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 70.0 265.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 70.0 265.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="90.0" y="285.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">c</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 160.0 265.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 160.0 265.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="180.0" y="285.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">b</text>
+</g>
+<g data-constructor="Overlay" data-shape="circle" data-emphasis="active">
+<path d="M 115.0 190.0 A 20 20 0 1 0 155.0 190.0 A 20 20 0 1 0 115.0 190.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 115.0 190.0 A 20 20 0 0 1 155.0 190.0 Z" fill="#6e9fc7" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 115.0 190.0 A 20 20 0 0 0 155.0 190.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 115.0 190.0 A 20 20 0 1 0 155.0 190.0 A 20 20 0 1 0 115.0 190.0 Z" fill="none" stroke="black" stroke-width="2.4"/>
+<line x1="115.0" y1="190.0" x2="155.0" y2="190.0" stroke="black" stroke-width="1"/>
+</g>
+<g data-constructor="Connect" data-shape="diamond" data-emphasis="active">
+<path d="M 67.5 69.0 L 93.5 95.0 L 67.5 121.0 L 41.5 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 41.5 95.0 L 67.5 69.0 L 93.5 95.0 Z" fill="#6e9fc7" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 41.5 95.0 L 67.5 121.0 L 93.5 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 67.5 69.0 L 93.5 95.0 L 67.5 121.0 L 41.5 95.0 Z" fill="none" stroke="black" stroke-width="2.4"/>
+<line x1="41.5" y1="95.0" x2="93.5" y2="95.0" stroke="black" stroke-width="1"/>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 250.0 170.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 250.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="270.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">b</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 340.0 170.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 340.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="360.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">d</text>
+</g>
+<g data-constructor="Connect" data-shape="diamond" data-emphasis="context">
+<path d="M 315.0 69.0 L 341.0 95.0 L 315.0 121.0 L 289.0 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 289.0 95.0 L 315.0 69.0 L 341.0 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 289.0 95.0 L 315.0 121.0 L 341.0 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 315.0 69.0 L 341.0 95.0 L 315.0 121.0 L 289.0 95.0 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<line x1="289.0" y1="95.0" x2="341.0" y2="95.0" stroke="#abb5bd" stroke-width="1"/>
+</g>
+<g data-constructor="Overlay" data-shape="circle" data-emphasis="context">
+<path d="M 171.2 0.0 A 20 20 0 1 0 211.2 0.0 A 20 20 0 1 0 171.2 0.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 171.2 0.0 A 20 20 0 0 1 211.2 0.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 171.2 0.0 A 20 20 0 0 0 211.2 0.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 171.2 0.0 A 20 20 0 1 0 211.2 0.0 A 20 20 0 1 0 171.2 0.0 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<line x1="171.2" y1="0.0" x2="211.2" y2="0.0" stroke="#abb5bd" stroke-width="1"/>
+</g>
+</g>
+<g data-neighbor-scene="Up:4" data-neighbor-targets="Up:8@0" aria-hidden="true" display="none">
+<line x1="126.4" y1="208.1" x2="99.5" y2="265.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="143.6" y1="208.1" x2="170.5" y2="265.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="56.7" y1="110.2" x2="14.2" y2="170.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="78.3" y1="110.2" x2="123.4" y2="173.7" stroke="#d5dce1" stroke-width="1"/>
+<line x1="306.6" y1="112.6" x2="279.5" y2="170.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="323.4" y1="112.6" x2="350.5" y2="170.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="175.4" y1="12.2" x2="82.2" y2="83.7" stroke="#d5dce1" stroke-width="1"/>
+<line x1="207.1" y1="12.2" x2="300.3" y2="83.7" stroke="#d5dce1" stroke-width="1"/>
+<g data-move="Up"><path data-lane="Up" d="M 82.21 83.71 L 175.39 12.18" fill="none" stroke="#ba743b" stroke-width="2.5" stroke-linecap="round" marker-end="url(#arrow-ba743b)"/>
+</g><path data-pointer="left" d="M 27.5 100.0 L 35.5 105.0 L 27.5 110.0 Z" fill="black"/>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M -20.0 170.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M -20.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="0.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">a</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 70.0 265.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 70.0 265.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="90.0" y="285.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">c</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 160.0 265.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 160.0 265.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="180.0" y="285.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">b</text>
+</g>
+<g data-constructor="Overlay" data-shape="circle" data-emphasis="context">
+<path d="M 115.0 190.0 A 20 20 0 1 0 155.0 190.0 A 20 20 0 1 0 115.0 190.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 115.0 190.0 A 20 20 0 0 1 155.0 190.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 115.0 190.0 A 20 20 0 0 0 155.0 190.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 115.0 190.0 A 20 20 0 1 0 155.0 190.0 A 20 20 0 1 0 115.0 190.0 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<line x1="115.0" y1="190.0" x2="155.0" y2="190.0" stroke="#abb5bd" stroke-width="1"/>
+</g>
+<g data-constructor="Connect" data-shape="diamond" data-emphasis="active">
+<path d="M 67.5 69.0 L 93.5 95.0 L 67.5 121.0 L 41.5 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 41.5 95.0 L 67.5 69.0 L 93.5 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 41.5 95.0 L 67.5 121.0 L 93.5 95.0 Z" fill="#db924f" stroke="none" stroke-width="1.0"/>
+<path d="M 67.5 69.0 L 93.5 95.0 L 67.5 121.0 L 41.5 95.0 Z" fill="none" stroke="black" stroke-width="2.4"/>
+<line x1="41.5" y1="95.0" x2="93.5" y2="95.0" stroke="black" stroke-width="1"/>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 250.0 170.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 250.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="270.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">b</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 340.0 170.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 340.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="360.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">d</text>
+</g>
+<g data-constructor="Connect" data-shape="diamond" data-emphasis="context">
+<path d="M 315.0 69.0 L 341.0 95.0 L 315.0 121.0 L 289.0 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 289.0 95.0 L 315.0 69.0 L 341.0 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 289.0 95.0 L 315.0 121.0 L 341.0 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 315.0 69.0 L 341.0 95.0 L 315.0 121.0 L 289.0 95.0 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<line x1="289.0" y1="95.0" x2="341.0" y2="95.0" stroke="#abb5bd" stroke-width="1"/>
+</g>
+<g data-constructor="Overlay" data-shape="circle" data-emphasis="active">
+<path d="M 171.2 0.0 A 20 20 0 1 0 211.2 0.0 A 20 20 0 1 0 171.2 0.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 171.2 0.0 A 20 20 0 0 1 211.2 0.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 171.2 0.0 A 20 20 0 0 0 211.2 0.0 Z" fill="#db924f" stroke="none" stroke-width="1.0"/>
+<path d="M 171.2 0.0 A 20 20 0 1 0 211.2 0.0 A 20 20 0 1 0 171.2 0.0 Z" fill="none" stroke="black" stroke-width="2.4"/>
+<line x1="171.2" y1="0.0" x2="211.2" y2="0.0" stroke="black" stroke-width="1"/>
+</g>
+</g>
+<g data-neighbor-scene="Down:7" data-neighbor-targets="At:b@0 At:d@0" aria-hidden="true" display="none">
+<line x1="126.4" y1="208.1" x2="99.5" y2="265.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="143.6" y1="208.1" x2="170.5" y2="265.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="56.7" y1="110.2" x2="14.2" y2="170.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="78.3" y1="110.2" x2="123.4" y2="173.7" stroke="#d5dce1" stroke-width="1"/>
+<line x1="306.6" y1="112.6" x2="279.5" y2="170.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="323.4" y1="112.6" x2="350.5" y2="170.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="175.4" y1="12.2" x2="82.2" y2="83.7" stroke="#d5dce1" stroke-width="1"/>
+<line x1="207.1" y1="12.2" x2="300.3" y2="83.7" stroke="#d5dce1" stroke-width="1"/>
+<g data-move="Down"><path data-lane="Down" d="M 306.64 112.64 L 279.47 170.00" fill="none" stroke="#4c7fa5" stroke-width="2.5" stroke-linecap="round" marker-end="url(#arrow-4c7fa5)"/>
+</g><g data-move="Down"><path data-lane="Down" d="M 323.36 112.64 L 350.53 170.00" fill="none" stroke="#4c7fa5" stroke-width="2.5" stroke-linecap="round" marker-end="url(#arrow-4c7fa5)"/>
+</g><path data-pointer="left" d="M 275.0 80.0 L 283.0 85.0 L 275.0 90.0 Z" fill="black"/>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M -20.0 170.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M -20.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="0.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">a</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 70.0 265.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 70.0 265.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="90.0" y="285.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">c</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 160.0 265.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 160.0 265.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="180.0" y="285.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">b</text>
+</g>
+<g data-constructor="Overlay" data-shape="circle" data-emphasis="context">
+<path d="M 115.0 190.0 A 20 20 0 1 0 155.0 190.0 A 20 20 0 1 0 115.0 190.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 115.0 190.0 A 20 20 0 0 1 155.0 190.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 115.0 190.0 A 20 20 0 0 0 155.0 190.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 115.0 190.0 A 20 20 0 1 0 155.0 190.0 A 20 20 0 1 0 115.0 190.0 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<line x1="115.0" y1="190.0" x2="155.0" y2="190.0" stroke="#abb5bd" stroke-width="1"/>
+</g>
+<g data-constructor="Connect" data-shape="diamond" data-emphasis="context">
+<path d="M 67.5 69.0 L 93.5 95.0 L 67.5 121.0 L 41.5 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 41.5 95.0 L 67.5 69.0 L 93.5 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 41.5 95.0 L 67.5 121.0 L 93.5 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 67.5 69.0 L 93.5 95.0 L 67.5 121.0 L 41.5 95.0 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<line x1="41.5" y1="95.0" x2="93.5" y2="95.0" stroke="#abb5bd" stroke-width="1"/>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="active">
+<path d="M 250.0 170.0 h 40 v 40 h -40 Z" fill="#b4cea5" stroke="none" stroke-width="1.0"/>
+<path d="M 250.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="black" stroke-width="2.4"/>
+<text x="270.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">b</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="active">
+<path d="M 340.0 170.0 h 40 v 40 h -40 Z" fill="#b4cea5" stroke="none" stroke-width="1.0"/>
+<path d="M 340.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="black" stroke-width="2.4"/>
+<text x="360.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">d</text>
+</g>
+<g data-constructor="Connect" data-shape="diamond" data-emphasis="active">
+<path d="M 315.0 69.0 L 341.0 95.0 L 315.0 121.0 L 289.0 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 289.0 95.0 L 315.0 69.0 L 341.0 95.0 Z" fill="#6e9fc7" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 289.0 95.0 L 315.0 121.0 L 341.0 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 315.0 69.0 L 341.0 95.0 L 315.0 121.0 L 289.0 95.0 Z" fill="none" stroke="black" stroke-width="2.4"/>
+<line x1="289.0" y1="95.0" x2="341.0" y2="95.0" stroke="black" stroke-width="1"/>
+</g>
+<g data-constructor="Overlay" data-shape="circle" data-emphasis="context">
+<path d="M 171.2 0.0 A 20 20 0 1 0 211.2 0.0 A 20 20 0 1 0 171.2 0.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 171.2 0.0 A 20 20 0 0 1 211.2 0.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 171.2 0.0 A 20 20 0 0 0 211.2 0.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 171.2 0.0 A 20 20 0 1 0 211.2 0.0 A 20 20 0 1 0 171.2 0.0 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<line x1="171.2" y1="0.0" x2="211.2" y2="0.0" stroke="#abb5bd" stroke-width="1"/>
+</g>
+</g>
+<g data-neighbor-scene="Up:7" data-neighbor-targets="Up:8@0" aria-hidden="true" display="none">
+<line x1="126.4" y1="208.1" x2="99.5" y2="265.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="143.6" y1="208.1" x2="170.5" y2="265.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="56.7" y1="110.2" x2="14.2" y2="170.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="78.3" y1="110.2" x2="123.4" y2="173.7" stroke="#d5dce1" stroke-width="1"/>
+<line x1="306.6" y1="112.6" x2="279.5" y2="170.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="323.4" y1="112.6" x2="350.5" y2="170.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="175.4" y1="12.2" x2="82.2" y2="83.7" stroke="#d5dce1" stroke-width="1"/>
+<line x1="207.1" y1="12.2" x2="300.3" y2="83.7" stroke="#d5dce1" stroke-width="1"/>
+<g data-move="Up"><path data-lane="Up" d="M 300.29 83.71 L 207.11 12.18" fill="none" stroke="#ba743b" stroke-width="2.5" stroke-linecap="round" marker-end="url(#arrow-ba743b)"/>
+</g><path data-pointer="left" d="M 275.0 100.0 L 283.0 105.0 L 275.0 110.0 Z" fill="black"/>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M -20.0 170.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M -20.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="0.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">a</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 70.0 265.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 70.0 265.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="90.0" y="285.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">c</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 160.0 265.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 160.0 265.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="180.0" y="285.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">b</text>
+</g>
+<g data-constructor="Overlay" data-shape="circle" data-emphasis="context">
+<path d="M 115.0 190.0 A 20 20 0 1 0 155.0 190.0 A 20 20 0 1 0 115.0 190.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 115.0 190.0 A 20 20 0 0 1 155.0 190.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 115.0 190.0 A 20 20 0 0 0 155.0 190.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 115.0 190.0 A 20 20 0 1 0 155.0 190.0 A 20 20 0 1 0 115.0 190.0 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<line x1="115.0" y1="190.0" x2="155.0" y2="190.0" stroke="#abb5bd" stroke-width="1"/>
+</g>
+<g data-constructor="Connect" data-shape="diamond" data-emphasis="context">
+<path d="M 67.5 69.0 L 93.5 95.0 L 67.5 121.0 L 41.5 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 41.5 95.0 L 67.5 69.0 L 93.5 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 41.5 95.0 L 67.5 121.0 L 93.5 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 67.5 69.0 L 93.5 95.0 L 67.5 121.0 L 41.5 95.0 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<line x1="41.5" y1="95.0" x2="93.5" y2="95.0" stroke="#abb5bd" stroke-width="1"/>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 250.0 170.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 250.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="270.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">b</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 340.0 170.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 340.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="360.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">d</text>
+</g>
+<g data-constructor="Connect" data-shape="diamond" data-emphasis="active">
+<path d="M 315.0 69.0 L 341.0 95.0 L 315.0 121.0 L 289.0 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 289.0 95.0 L 315.0 69.0 L 341.0 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 289.0 95.0 L 315.0 121.0 L 341.0 95.0 Z" fill="#db924f" stroke="none" stroke-width="1.0"/>
+<path d="M 315.0 69.0 L 341.0 95.0 L 315.0 121.0 L 289.0 95.0 Z" fill="none" stroke="black" stroke-width="2.4"/>
+<line x1="289.0" y1="95.0" x2="341.0" y2="95.0" stroke="black" stroke-width="1"/>
+</g>
+<g data-constructor="Overlay" data-shape="circle" data-emphasis="active">
+<path d="M 171.2 0.0 A 20 20 0 1 0 211.2 0.0 A 20 20 0 1 0 171.2 0.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 171.2 0.0 A 20 20 0 0 1 211.2 0.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 171.2 0.0 A 20 20 0 0 0 211.2 0.0 Z" fill="#db924f" stroke="none" stroke-width="1.0"/>
+<path d="M 171.2 0.0 A 20 20 0 1 0 211.2 0.0 A 20 20 0 1 0 171.2 0.0 Z" fill="none" stroke="black" stroke-width="2.4"/>
+<line x1="171.2" y1="0.0" x2="211.2" y2="0.0" stroke="black" stroke-width="1"/>
+</g>
+</g>
+<g data-neighbor-scene="Down:8" data-neighbor-targets="Down:4@0 Down:7@0" aria-hidden="true" display="none">
+<line x1="126.4" y1="208.1" x2="99.5" y2="265.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="143.6" y1="208.1" x2="170.5" y2="265.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="56.7" y1="110.2" x2="14.2" y2="170.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="78.3" y1="110.2" x2="123.4" y2="173.7" stroke="#d5dce1" stroke-width="1"/>
+<line x1="306.6" y1="112.6" x2="279.5" y2="170.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="323.4" y1="112.6" x2="350.5" y2="170.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="175.4" y1="12.2" x2="82.2" y2="83.7" stroke="#d5dce1" stroke-width="1"/>
+<line x1="207.1" y1="12.2" x2="300.3" y2="83.7" stroke="#d5dce1" stroke-width="1"/>
+<g data-move="Down"><path data-lane="Down" d="M 175.39 12.18 L 82.21 83.71" fill="none" stroke="#4c7fa5" stroke-width="2.5" stroke-linecap="round" marker-end="url(#arrow-4c7fa5)"/>
+</g><g data-move="Down"><path data-lane="Down" d="M 207.11 12.18 L 300.29 83.71" fill="none" stroke="#4c7fa5" stroke-width="2.5" stroke-linecap="round" marker-end="url(#arrow-4c7fa5)"/>
+</g><path data-pointer="left" d="M 151.2 -15.0 L 159.2 -10.0 L 151.2 -5.0 Z" fill="black"/>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M -20.0 170.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M -20.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="0.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">a</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 70.0 265.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 70.0 265.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="90.0" y="285.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">c</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 160.0 265.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 160.0 265.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="180.0" y="285.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">b</text>
+</g>
+<g data-constructor="Overlay" data-shape="circle" data-emphasis="context">
+<path d="M 115.0 190.0 A 20 20 0 1 0 155.0 190.0 A 20 20 0 1 0 115.0 190.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 115.0 190.0 A 20 20 0 0 1 155.0 190.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 115.0 190.0 A 20 20 0 0 0 155.0 190.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 115.0 190.0 A 20 20 0 1 0 155.0 190.0 A 20 20 0 1 0 115.0 190.0 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<line x1="115.0" y1="190.0" x2="155.0" y2="190.0" stroke="#abb5bd" stroke-width="1"/>
+</g>
+<g data-constructor="Connect" data-shape="diamond" data-emphasis="active">
+<path d="M 67.5 69.0 L 93.5 95.0 L 67.5 121.0 L 41.5 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 41.5 95.0 L 67.5 69.0 L 93.5 95.0 Z" fill="#6e9fc7" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 41.5 95.0 L 67.5 121.0 L 93.5 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 67.5 69.0 L 93.5 95.0 L 67.5 121.0 L 41.5 95.0 Z" fill="none" stroke="black" stroke-width="2.4"/>
+<line x1="41.5" y1="95.0" x2="93.5" y2="95.0" stroke="black" stroke-width="1"/>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 250.0 170.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 250.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="270.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">b</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 340.0 170.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 340.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="360.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">d</text>
+</g>
+<g data-constructor="Connect" data-shape="diamond" data-emphasis="active">
+<path d="M 315.0 69.0 L 341.0 95.0 L 315.0 121.0 L 289.0 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 289.0 95.0 L 315.0 69.0 L 341.0 95.0 Z" fill="#6e9fc7" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 289.0 95.0 L 315.0 121.0 L 341.0 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 315.0 69.0 L 341.0 95.0 L 315.0 121.0 L 289.0 95.0 Z" fill="none" stroke="black" stroke-width="2.4"/>
+<line x1="289.0" y1="95.0" x2="341.0" y2="95.0" stroke="black" stroke-width="1"/>
+</g>
+<g data-constructor="Overlay" data-shape="circle" data-emphasis="active">
+<path d="M 171.2 0.0 A 20 20 0 1 0 211.2 0.0 A 20 20 0 1 0 171.2 0.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 171.2 0.0 A 20 20 0 0 1 211.2 0.0 Z" fill="#6e9fc7" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 171.2 0.0 A 20 20 0 0 0 211.2 0.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 171.2 0.0 A 20 20 0 1 0 211.2 0.0 A 20 20 0 1 0 171.2 0.0 Z" fill="none" stroke="black" stroke-width="2.4"/>
+<line x1="171.2" y1="0.0" x2="211.2" y2="0.0" stroke="black" stroke-width="1"/>
+</g>
+</g>
+<g data-neighbor-scene="Up:8" data-neighbor-targets="" aria-hidden="true" display="none">
+<line x1="126.4" y1="208.1" x2="99.5" y2="265.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="143.6" y1="208.1" x2="170.5" y2="265.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="56.7" y1="110.2" x2="14.2" y2="170.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="78.3" y1="110.2" x2="123.4" y2="173.7" stroke="#d5dce1" stroke-width="1"/>
+<line x1="306.6" y1="112.6" x2="279.5" y2="170.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="323.4" y1="112.6" x2="350.5" y2="170.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="175.4" y1="12.2" x2="82.2" y2="83.7" stroke="#d5dce1" stroke-width="1"/>
+<line x1="207.1" y1="12.2" x2="300.3" y2="83.7" stroke="#d5dce1" stroke-width="1"/>
+<path data-pointer="left" d="M 151.2 5.0 L 159.2 10.0 L 151.2 15.0 Z" fill="black"/>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M -20.0 170.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M -20.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="0.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">a</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 70.0 265.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 70.0 265.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="90.0" y="285.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">c</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 160.0 265.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 160.0 265.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="180.0" y="285.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">b</text>
+</g>
+<g data-constructor="Overlay" data-shape="circle" data-emphasis="context">
+<path d="M 115.0 190.0 A 20 20 0 1 0 155.0 190.0 A 20 20 0 1 0 115.0 190.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 115.0 190.0 A 20 20 0 0 1 155.0 190.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 115.0 190.0 A 20 20 0 0 0 155.0 190.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 115.0 190.0 A 20 20 0 1 0 155.0 190.0 A 20 20 0 1 0 115.0 190.0 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<line x1="115.0" y1="190.0" x2="155.0" y2="190.0" stroke="#abb5bd" stroke-width="1"/>
+</g>
+<g data-constructor="Connect" data-shape="diamond" data-emphasis="context">
+<path d="M 67.5 69.0 L 93.5 95.0 L 67.5 121.0 L 41.5 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 41.5 95.0 L 67.5 69.0 L 93.5 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 41.5 95.0 L 67.5 121.0 L 93.5 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 67.5 69.0 L 93.5 95.0 L 67.5 121.0 L 41.5 95.0 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<line x1="41.5" y1="95.0" x2="93.5" y2="95.0" stroke="#abb5bd" stroke-width="1"/>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 250.0 170.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 250.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="270.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">b</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 340.0 170.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 340.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="360.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">d</text>
+</g>
+<g data-constructor="Connect" data-shape="diamond" data-emphasis="context">
+<path d="M 315.0 69.0 L 341.0 95.0 L 315.0 121.0 L 289.0 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 289.0 95.0 L 315.0 69.0 L 341.0 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 289.0 95.0 L 315.0 121.0 L 341.0 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 315.0 69.0 L 341.0 95.0 L 315.0 121.0 L 289.0 95.0 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<line x1="289.0" y1="95.0" x2="341.0" y2="95.0" stroke="#abb5bd" stroke-width="1"/>
+</g>
+<g data-constructor="Overlay" data-shape="circle" data-emphasis="active">
+<path d="M 171.2 0.0 A 20 20 0 1 0 211.2 0.0 A 20 20 0 1 0 171.2 0.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 171.2 0.0 A 20 20 0 0 1 211.2 0.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 171.2 0.0 A 20 20 0 0 0 211.2 0.0 Z" fill="#db924f" stroke="none" stroke-width="1.0"/>
+<path d="M 171.2 0.0 A 20 20 0 1 0 211.2 0.0 A 20 20 0 1 0 171.2 0.0 Z" fill="none" stroke="black" stroke-width="2.4"/>
+<line x1="171.2" y1="0.0" x2="211.2" y2="0.0" stroke="black" stroke-width="1"/>
+</g>
+</g>
+<g data-neighbor-scene="Down:0" data-neighbor-targets="" aria-hidden="true" display="none">
+<line x1="126.4" y1="208.1" x2="99.5" y2="265.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="143.6" y1="208.1" x2="170.5" y2="265.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="56.7" y1="110.2" x2="14.2" y2="170.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="78.3" y1="110.2" x2="123.4" y2="173.7" stroke="#d5dce1" stroke-width="1"/>
+<line x1="306.6" y1="112.6" x2="279.5" y2="170.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="323.4" y1="112.6" x2="350.5" y2="170.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="175.4" y1="12.2" x2="82.2" y2="83.7" stroke="#d5dce1" stroke-width="1"/>
+<line x1="207.1" y1="12.2" x2="300.3" y2="83.7" stroke="#d5dce1" stroke-width="1"/>
+<path data-pointer="left" d="M -40.0 185.0 L -32.0 190.0 L -40.0 195.0 Z" fill="black"/>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="active">
+<path d="M -20.0 170.0 h 40 v 40 h -40 Z" fill="#b4cea5" stroke="none" stroke-width="1.0"/>
+<path d="M -20.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="black" stroke-width="2.4"/>
+<text x="0.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">a</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 70.0 265.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 70.0 265.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="90.0" y="285.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">c</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 160.0 265.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 160.0 265.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="180.0" y="285.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">b</text>
+</g>
+<g data-constructor="Overlay" data-shape="circle" data-emphasis="context">
+<path d="M 115.0 190.0 A 20 20 0 1 0 155.0 190.0 A 20 20 0 1 0 115.0 190.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 115.0 190.0 A 20 20 0 0 1 155.0 190.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 115.0 190.0 A 20 20 0 0 0 155.0 190.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 115.0 190.0 A 20 20 0 1 0 155.0 190.0 A 20 20 0 1 0 115.0 190.0 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<line x1="115.0" y1="190.0" x2="155.0" y2="190.0" stroke="#abb5bd" stroke-width="1"/>
+</g>
+<g data-constructor="Connect" data-shape="diamond" data-emphasis="context">
+<path d="M 67.5 69.0 L 93.5 95.0 L 67.5 121.0 L 41.5 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 41.5 95.0 L 67.5 69.0 L 93.5 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 41.5 95.0 L 67.5 121.0 L 93.5 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 67.5 69.0 L 93.5 95.0 L 67.5 121.0 L 41.5 95.0 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<line x1="41.5" y1="95.0" x2="93.5" y2="95.0" stroke="#abb5bd" stroke-width="1"/>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 250.0 170.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 250.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="270.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">b</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 340.0 170.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 340.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="360.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">d</text>
+</g>
+<g data-constructor="Connect" data-shape="diamond" data-emphasis="context">
+<path d="M 315.0 69.0 L 341.0 95.0 L 315.0 121.0 L 289.0 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 289.0 95.0 L 315.0 69.0 L 341.0 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 289.0 95.0 L 315.0 121.0 L 341.0 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 315.0 69.0 L 341.0 95.0 L 315.0 121.0 L 289.0 95.0 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<line x1="289.0" y1="95.0" x2="341.0" y2="95.0" stroke="#abb5bd" stroke-width="1"/>
+</g>
+<g data-constructor="Overlay" data-shape="circle" data-emphasis="context">
+<path d="M 171.2 0.0 A 20 20 0 1 0 211.2 0.0 A 20 20 0 1 0 171.2 0.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 171.2 0.0 A 20 20 0 0 1 211.2 0.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 171.2 0.0 A 20 20 0 0 0 211.2 0.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 171.2 0.0 A 20 20 0 1 0 211.2 0.0 A 20 20 0 1 0 171.2 0.0 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<line x1="171.2" y1="0.0" x2="211.2" y2="0.0" stroke="#abb5bd" stroke-width="1"/>
+</g>
+</g>
+<g data-neighbor-scene="Down:1" data-neighbor-targets="" aria-hidden="true" display="none">
+<line x1="126.4" y1="208.1" x2="99.5" y2="265.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="143.6" y1="208.1" x2="170.5" y2="265.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="56.7" y1="110.2" x2="14.2" y2="170.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="78.3" y1="110.2" x2="123.4" y2="173.7" stroke="#d5dce1" stroke-width="1"/>
+<line x1="306.6" y1="112.6" x2="279.5" y2="170.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="323.4" y1="112.6" x2="350.5" y2="170.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="175.4" y1="12.2" x2="82.2" y2="83.7" stroke="#d5dce1" stroke-width="1"/>
+<line x1="207.1" y1="12.2" x2="300.3" y2="83.7" stroke="#d5dce1" stroke-width="1"/>
+<path data-pointer="left" d="M 50.0 280.0 L 58.0 285.0 L 50.0 290.0 Z" fill="black"/>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M -20.0 170.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M -20.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="0.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">a</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="active">
+<path d="M 70.0 265.0 h 40 v 40 h -40 Z" fill="#b4cea5" stroke="none" stroke-width="1.0"/>
+<path d="M 70.0 265.0 h 40 v 40 h -40 Z" fill="none" stroke="black" stroke-width="2.4"/>
+<text x="90.0" y="285.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">c</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 160.0 265.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 160.0 265.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="180.0" y="285.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">b</text>
+</g>
+<g data-constructor="Overlay" data-shape="circle" data-emphasis="context">
+<path d="M 115.0 190.0 A 20 20 0 1 0 155.0 190.0 A 20 20 0 1 0 115.0 190.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 115.0 190.0 A 20 20 0 0 1 155.0 190.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 115.0 190.0 A 20 20 0 0 0 155.0 190.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 115.0 190.0 A 20 20 0 1 0 155.0 190.0 A 20 20 0 1 0 115.0 190.0 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<line x1="115.0" y1="190.0" x2="155.0" y2="190.0" stroke="#abb5bd" stroke-width="1"/>
+</g>
+<g data-constructor="Connect" data-shape="diamond" data-emphasis="context">
+<path d="M 67.5 69.0 L 93.5 95.0 L 67.5 121.0 L 41.5 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 41.5 95.0 L 67.5 69.0 L 93.5 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 41.5 95.0 L 67.5 121.0 L 93.5 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 67.5 69.0 L 93.5 95.0 L 67.5 121.0 L 41.5 95.0 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<line x1="41.5" y1="95.0" x2="93.5" y2="95.0" stroke="#abb5bd" stroke-width="1"/>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 250.0 170.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 250.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="270.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">b</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 340.0 170.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 340.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="360.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">d</text>
+</g>
+<g data-constructor="Connect" data-shape="diamond" data-emphasis="context">
+<path d="M 315.0 69.0 L 341.0 95.0 L 315.0 121.0 L 289.0 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 289.0 95.0 L 315.0 69.0 L 341.0 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 289.0 95.0 L 315.0 121.0 L 341.0 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 315.0 69.0 L 341.0 95.0 L 315.0 121.0 L 289.0 95.0 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<line x1="289.0" y1="95.0" x2="341.0" y2="95.0" stroke="#abb5bd" stroke-width="1"/>
+</g>
+<g data-constructor="Overlay" data-shape="circle" data-emphasis="context">
+<path d="M 171.2 0.0 A 20 20 0 1 0 211.2 0.0 A 20 20 0 1 0 171.2 0.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 171.2 0.0 A 20 20 0 0 1 211.2 0.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 171.2 0.0 A 20 20 0 0 0 211.2 0.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 171.2 0.0 A 20 20 0 1 0 211.2 0.0 A 20 20 0 1 0 171.2 0.0 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<line x1="171.2" y1="0.0" x2="211.2" y2="0.0" stroke="#abb5bd" stroke-width="1"/>
+</g>
+</g>
+<g data-neighbor-scene="Down:2" data-neighbor-targets="" aria-hidden="true" display="none">
+<line x1="126.4" y1="208.1" x2="99.5" y2="265.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="143.6" y1="208.1" x2="170.5" y2="265.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="56.7" y1="110.2" x2="14.2" y2="170.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="78.3" y1="110.2" x2="123.4" y2="173.7" stroke="#d5dce1" stroke-width="1"/>
+<line x1="306.6" y1="112.6" x2="279.5" y2="170.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="323.4" y1="112.6" x2="350.5" y2="170.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="175.4" y1="12.2" x2="82.2" y2="83.7" stroke="#d5dce1" stroke-width="1"/>
+<line x1="207.1" y1="12.2" x2="300.3" y2="83.7" stroke="#d5dce1" stroke-width="1"/>
+<path data-pointer="left" d="M 140.0 280.0 L 148.0 285.0 L 140.0 290.0 Z" fill="black"/>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M -20.0 170.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M -20.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="0.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">a</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 70.0 265.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 70.0 265.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="90.0" y="285.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">c</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="active">
+<path d="M 160.0 265.0 h 40 v 40 h -40 Z" fill="#b4cea5" stroke="none" stroke-width="1.0"/>
+<path d="M 160.0 265.0 h 40 v 40 h -40 Z" fill="none" stroke="black" stroke-width="2.4"/>
+<text x="180.0" y="285.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">b</text>
+</g>
+<g data-constructor="Overlay" data-shape="circle" data-emphasis="context">
+<path d="M 115.0 190.0 A 20 20 0 1 0 155.0 190.0 A 20 20 0 1 0 115.0 190.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 115.0 190.0 A 20 20 0 0 1 155.0 190.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 115.0 190.0 A 20 20 0 0 0 155.0 190.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 115.0 190.0 A 20 20 0 1 0 155.0 190.0 A 20 20 0 1 0 115.0 190.0 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<line x1="115.0" y1="190.0" x2="155.0" y2="190.0" stroke="#abb5bd" stroke-width="1"/>
+</g>
+<g data-constructor="Connect" data-shape="diamond" data-emphasis="context">
+<path d="M 67.5 69.0 L 93.5 95.0 L 67.5 121.0 L 41.5 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 41.5 95.0 L 67.5 69.0 L 93.5 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 41.5 95.0 L 67.5 121.0 L 93.5 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 67.5 69.0 L 93.5 95.0 L 67.5 121.0 L 41.5 95.0 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<line x1="41.5" y1="95.0" x2="93.5" y2="95.0" stroke="#abb5bd" stroke-width="1"/>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 250.0 170.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 250.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="270.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">b</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 340.0 170.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 340.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="360.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">d</text>
+</g>
+<g data-constructor="Connect" data-shape="diamond" data-emphasis="context">
+<path d="M 315.0 69.0 L 341.0 95.0 L 315.0 121.0 L 289.0 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 289.0 95.0 L 315.0 69.0 L 341.0 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 289.0 95.0 L 315.0 121.0 L 341.0 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 315.0 69.0 L 341.0 95.0 L 315.0 121.0 L 289.0 95.0 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<line x1="289.0" y1="95.0" x2="341.0" y2="95.0" stroke="#abb5bd" stroke-width="1"/>
+</g>
+<g data-constructor="Overlay" data-shape="circle" data-emphasis="context">
+<path d="M 171.2 0.0 A 20 20 0 1 0 211.2 0.0 A 20 20 0 1 0 171.2 0.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 171.2 0.0 A 20 20 0 0 1 211.2 0.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 171.2 0.0 A 20 20 0 0 0 211.2 0.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 171.2 0.0 A 20 20 0 1 0 211.2 0.0 A 20 20 0 1 0 171.2 0.0 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<line x1="171.2" y1="0.0" x2="211.2" y2="0.0" stroke="#abb5bd" stroke-width="1"/>
+</g>
+</g>
+<g data-neighbor-scene="Down:5" data-neighbor-targets="" aria-hidden="true" display="none">
+<line x1="126.4" y1="208.1" x2="99.5" y2="265.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="143.6" y1="208.1" x2="170.5" y2="265.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="56.7" y1="110.2" x2="14.2" y2="170.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="78.3" y1="110.2" x2="123.4" y2="173.7" stroke="#d5dce1" stroke-width="1"/>
+<line x1="306.6" y1="112.6" x2="279.5" y2="170.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="323.4" y1="112.6" x2="350.5" y2="170.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="175.4" y1="12.2" x2="82.2" y2="83.7" stroke="#d5dce1" stroke-width="1"/>
+<line x1="207.1" y1="12.2" x2="300.3" y2="83.7" stroke="#d5dce1" stroke-width="1"/>
+<path data-pointer="left" d="M 230.0 185.0 L 238.0 190.0 L 230.0 195.0 Z" fill="black"/>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M -20.0 170.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M -20.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="0.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">a</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 70.0 265.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 70.0 265.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="90.0" y="285.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">c</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 160.0 265.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 160.0 265.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="180.0" y="285.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">b</text>
+</g>
+<g data-constructor="Overlay" data-shape="circle" data-emphasis="context">
+<path d="M 115.0 190.0 A 20 20 0 1 0 155.0 190.0 A 20 20 0 1 0 115.0 190.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 115.0 190.0 A 20 20 0 0 1 155.0 190.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 115.0 190.0 A 20 20 0 0 0 155.0 190.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 115.0 190.0 A 20 20 0 1 0 155.0 190.0 A 20 20 0 1 0 115.0 190.0 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<line x1="115.0" y1="190.0" x2="155.0" y2="190.0" stroke="#abb5bd" stroke-width="1"/>
+</g>
+<g data-constructor="Connect" data-shape="diamond" data-emphasis="context">
+<path d="M 67.5 69.0 L 93.5 95.0 L 67.5 121.0 L 41.5 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 41.5 95.0 L 67.5 69.0 L 93.5 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 41.5 95.0 L 67.5 121.0 L 93.5 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 67.5 69.0 L 93.5 95.0 L 67.5 121.0 L 41.5 95.0 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<line x1="41.5" y1="95.0" x2="93.5" y2="95.0" stroke="#abb5bd" stroke-width="1"/>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="active">
+<path d="M 250.0 170.0 h 40 v 40 h -40 Z" fill="#b4cea5" stroke="none" stroke-width="1.0"/>
+<path d="M 250.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="black" stroke-width="2.4"/>
+<text x="270.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">b</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 340.0 170.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 340.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="360.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">d</text>
+</g>
+<g data-constructor="Connect" data-shape="diamond" data-emphasis="context">
+<path d="M 315.0 69.0 L 341.0 95.0 L 315.0 121.0 L 289.0 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 289.0 95.0 L 315.0 69.0 L 341.0 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 289.0 95.0 L 315.0 121.0 L 341.0 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 315.0 69.0 L 341.0 95.0 L 315.0 121.0 L 289.0 95.0 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<line x1="289.0" y1="95.0" x2="341.0" y2="95.0" stroke="#abb5bd" stroke-width="1"/>
+</g>
+<g data-constructor="Overlay" data-shape="circle" data-emphasis="context">
+<path d="M 171.2 0.0 A 20 20 0 1 0 211.2 0.0 A 20 20 0 1 0 171.2 0.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 171.2 0.0 A 20 20 0 0 1 211.2 0.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 171.2 0.0 A 20 20 0 0 0 211.2 0.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 171.2 0.0 A 20 20 0 1 0 211.2 0.0 A 20 20 0 1 0 171.2 0.0 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<line x1="171.2" y1="0.0" x2="211.2" y2="0.0" stroke="#abb5bd" stroke-width="1"/>
+</g>
+</g>
+<g data-neighbor-scene="Down:6" data-neighbor-targets="" aria-hidden="true" display="none">
+<line x1="126.4" y1="208.1" x2="99.5" y2="265.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="143.6" y1="208.1" x2="170.5" y2="265.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="56.7" y1="110.2" x2="14.2" y2="170.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="78.3" y1="110.2" x2="123.4" y2="173.7" stroke="#d5dce1" stroke-width="1"/>
+<line x1="306.6" y1="112.6" x2="279.5" y2="170.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="323.4" y1="112.6" x2="350.5" y2="170.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="175.4" y1="12.2" x2="82.2" y2="83.7" stroke="#d5dce1" stroke-width="1"/>
+<line x1="207.1" y1="12.2" x2="300.3" y2="83.7" stroke="#d5dce1" stroke-width="1"/>
+<path data-pointer="right" d="M 400.0 185.0 L 392.0 190.0 L 400.0 195.0 Z" fill="black"/>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M -20.0 170.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M -20.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="0.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">a</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 70.0 265.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 70.0 265.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="90.0" y="285.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">c</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 160.0 265.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 160.0 265.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="180.0" y="285.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">b</text>
+</g>
+<g data-constructor="Overlay" data-shape="circle" data-emphasis="context">
+<path d="M 115.0 190.0 A 20 20 0 1 0 155.0 190.0 A 20 20 0 1 0 115.0 190.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 115.0 190.0 A 20 20 0 0 1 155.0 190.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 115.0 190.0 A 20 20 0 0 0 155.0 190.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 115.0 190.0 A 20 20 0 1 0 155.0 190.0 A 20 20 0 1 0 115.0 190.0 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<line x1="115.0" y1="190.0" x2="155.0" y2="190.0" stroke="#abb5bd" stroke-width="1"/>
+</g>
+<g data-constructor="Connect" data-shape="diamond" data-emphasis="context">
+<path d="M 67.5 69.0 L 93.5 95.0 L 67.5 121.0 L 41.5 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 41.5 95.0 L 67.5 69.0 L 93.5 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 41.5 95.0 L 67.5 121.0 L 93.5 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 67.5 69.0 L 93.5 95.0 L 67.5 121.0 L 41.5 95.0 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<line x1="41.5" y1="95.0" x2="93.5" y2="95.0" stroke="#abb5bd" stroke-width="1"/>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 250.0 170.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 250.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="270.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">b</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="active">
+<path d="M 340.0 170.0 h 40 v 40 h -40 Z" fill="#b4cea5" stroke="none" stroke-width="1.0"/>
+<path d="M 340.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="black" stroke-width="2.4"/>
+<text x="360.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">d</text>
+</g>
+<g data-constructor="Connect" data-shape="diamond" data-emphasis="context">
+<path d="M 315.0 69.0 L 341.0 95.0 L 315.0 121.0 L 289.0 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 289.0 95.0 L 315.0 69.0 L 341.0 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 289.0 95.0 L 315.0 121.0 L 341.0 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 315.0 69.0 L 341.0 95.0 L 315.0 121.0 L 289.0 95.0 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<line x1="289.0" y1="95.0" x2="341.0" y2="95.0" stroke="#abb5bd" stroke-width="1"/>
+</g>
+<g data-constructor="Overlay" data-shape="circle" data-emphasis="context">
+<path d="M 171.2 0.0 A 20 20 0 1 0 211.2 0.0 A 20 20 0 1 0 171.2 0.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 171.2 0.0 A 20 20 0 0 1 211.2 0.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 171.2 0.0 A 20 20 0 0 0 211.2 0.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 171.2 0.0 A 20 20 0 1 0 211.2 0.0 A 20 20 0 1 0 171.2 0.0 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<line x1="171.2" y1="0.0" x2="211.2" y2="0.0" stroke="#abb5bd" stroke-width="1"/>
+</g>
+</g>
+<g data-neighbor-scene="At:a" data-neighbor-targets="Up:4@0 Down:3@1" aria-hidden="true" display="none">
+<line x1="126.4" y1="208.1" x2="99.5" y2="265.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="143.6" y1="208.1" x2="170.5" y2="265.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="56.7" y1="110.2" x2="14.2" y2="170.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="78.3" y1="110.2" x2="123.4" y2="173.7" stroke="#d5dce1" stroke-width="1"/>
+<line x1="306.6" y1="112.6" x2="279.5" y2="170.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="323.4" y1="112.6" x2="350.5" y2="170.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="175.4" y1="12.2" x2="82.2" y2="83.7" stroke="#d5dce1" stroke-width="1"/>
+<line x1="207.1" y1="12.2" x2="300.3" y2="83.7" stroke="#d5dce1" stroke-width="1"/>
+<g data-move="Up"><path data-lane="Up" d="M 14.21 170.00 L 56.70 110.20" fill="none" stroke="#ba743b" stroke-width="2.5" stroke-linecap="round" marker-end="url(#arrow-ba743b)"/>
+</g><g data-move="Switch"><path data-halo="true" d="M 20.0 190.0 Q 69.5 164.1 119.0 178.0" fill="none" stroke="white" stroke-width="4.5"/>
+<path data-relation="switch" data-weight="1" d="M 20.0 190.0 Q 69.5 164.1 119.0 178.0" fill="none" stroke="#6f56c9" stroke-width="1.8" stroke-dasharray="5 3" marker-end="url(#paid-arrow)"/>
+<text x="69.5" y="156.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#6f56c9" stroke="white" stroke-width="3" paint-order="stroke">1</text>
+</g><path data-pointer="left" d="M -40.0 185.0 L -32.0 190.0 L -40.0 195.0 Z" fill="black"/>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="active">
+<path d="M -20.0 170.0 h 40 v 40 h -40 Z" fill="#b4cea5" stroke="none" stroke-width="1.0"/>
+<path d="M -20.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="black" stroke-width="2.4"/>
+<text x="0.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">a</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 70.0 265.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 70.0 265.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="90.0" y="285.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">c</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 160.0 265.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 160.0 265.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="180.0" y="285.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">b</text>
+</g>
+<g data-constructor="Overlay" data-shape="circle" data-emphasis="active">
+<path d="M 115.0 190.0 A 20 20 0 1 0 155.0 190.0 A 20 20 0 1 0 115.0 190.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 115.0 190.0 A 20 20 0 0 1 155.0 190.0 Z" fill="#6e9fc7" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 115.0 190.0 A 20 20 0 0 0 155.0 190.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 115.0 190.0 A 20 20 0 1 0 155.0 190.0 A 20 20 0 1 0 115.0 190.0 Z" fill="none" stroke="black" stroke-width="2.4"/>
+<line x1="115.0" y1="190.0" x2="155.0" y2="190.0" stroke="black" stroke-width="1"/>
+</g>
+<g data-constructor="Connect" data-shape="diamond" data-emphasis="active">
+<path d="M 67.5 69.0 L 93.5 95.0 L 67.5 121.0 L 41.5 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 41.5 95.0 L 67.5 69.0 L 93.5 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 41.5 95.0 L 67.5 121.0 L 93.5 95.0 Z" fill="#db924f" stroke="none" stroke-width="1.0"/>
+<path d="M 67.5 69.0 L 93.5 95.0 L 67.5 121.0 L 41.5 95.0 Z" fill="none" stroke="black" stroke-width="2.4"/>
+<line x1="41.5" y1="95.0" x2="93.5" y2="95.0" stroke="black" stroke-width="1"/>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 250.0 170.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 250.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="270.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">b</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 340.0 170.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 340.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="360.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">d</text>
+</g>
+<g data-constructor="Connect" data-shape="diamond" data-emphasis="context">
+<path d="M 315.0 69.0 L 341.0 95.0 L 315.0 121.0 L 289.0 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 289.0 95.0 L 315.0 69.0 L 341.0 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 289.0 95.0 L 315.0 121.0 L 341.0 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 315.0 69.0 L 341.0 95.0 L 315.0 121.0 L 289.0 95.0 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<line x1="289.0" y1="95.0" x2="341.0" y2="95.0" stroke="#abb5bd" stroke-width="1"/>
+</g>
+<g data-constructor="Overlay" data-shape="circle" data-emphasis="context">
+<path d="M 171.2 0.0 A 20 20 0 1 0 211.2 0.0 A 20 20 0 1 0 171.2 0.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 171.2 0.0 A 20 20 0 0 1 211.2 0.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 171.2 0.0 A 20 20 0 0 0 211.2 0.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 171.2 0.0 A 20 20 0 1 0 211.2 0.0 A 20 20 0 1 0 171.2 0.0 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<line x1="171.2" y1="0.0" x2="211.2" y2="0.0" stroke="#abb5bd" stroke-width="1"/>
+</g>
+</g>
+<g data-neighbor-scene="At:b" data-neighbor-targets="Up:7@0 At:d@2 Up:3@0" aria-hidden="true" display="none">
+<line x1="126.4" y1="208.1" x2="99.5" y2="265.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="143.6" y1="208.1" x2="170.5" y2="265.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="56.7" y1="110.2" x2="14.2" y2="170.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="78.3" y1="110.2" x2="123.4" y2="173.7" stroke="#d5dce1" stroke-width="1"/>
+<line x1="306.6" y1="112.6" x2="279.5" y2="170.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="323.4" y1="112.6" x2="350.5" y2="170.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="175.4" y1="12.2" x2="82.2" y2="83.7" stroke="#d5dce1" stroke-width="1"/>
+<line x1="207.1" y1="12.2" x2="300.3" y2="83.7" stroke="#d5dce1" stroke-width="1"/>
+<g data-move="Up"><path data-lane="Up" d="M 279.47 170.00 L 306.64 112.64" fill="none" stroke="#ba743b" stroke-width="2.5" stroke-linecap="round" marker-end="url(#arrow-ba743b)"/>
+</g><g data-move="Switch"><path data-halo="true" d="M 290.0 190.0 L 340.0 190.0" fill="none" stroke="white" stroke-width="4.5"/>
+<path data-relation="switch" data-weight="2" d="M 290.0 190.0 L 340.0 190.0" fill="none" stroke="#6f56c9" stroke-width="1.8" stroke-dasharray="5 3" marker-end="url(#paid-arrow)"/>
+<text x="315.0" y="203.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#6f56c9" stroke="white" stroke-width="3" paint-order="stroke">2</text>
+</g><g data-move="Up"><path data-lane="Up" d="M 170.53 265.00 L 143.56 208.07" fill="none" stroke="#ba743b" stroke-width="2.5" stroke-linecap="round" marker-end="url(#arrow-ba743b)"/>
+</g><path data-pointer="left" d="M 140.0 280.0 L 148.0 285.0 L 140.0 290.0 Z" fill="black"/>
+<path data-pointer="left" d="M 230.0 185.0 L 238.0 190.0 L 230.0 195.0 Z" fill="black"/>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M -20.0 170.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M -20.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="0.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">a</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 70.0 265.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 70.0 265.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="90.0" y="285.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">c</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="active">
+<path d="M 160.0 265.0 h 40 v 40 h -40 Z" fill="#b4cea5" stroke="none" stroke-width="1.0"/>
+<path d="M 160.0 265.0 h 40 v 40 h -40 Z" fill="none" stroke="black" stroke-width="2.4"/>
+<text x="180.0" y="285.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">b</text>
+</g>
+<g data-constructor="Overlay" data-shape="circle" data-emphasis="active">
+<path d="M 115.0 190.0 A 20 20 0 1 0 155.0 190.0 A 20 20 0 1 0 115.0 190.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 115.0 190.0 A 20 20 0 0 1 155.0 190.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 115.0 190.0 A 20 20 0 0 0 155.0 190.0 Z" fill="#db924f" stroke="none" stroke-width="1.0"/>
+<path d="M 115.0 190.0 A 20 20 0 1 0 155.0 190.0 A 20 20 0 1 0 115.0 190.0 Z" fill="none" stroke="black" stroke-width="2.4"/>
+<line x1="115.0" y1="190.0" x2="155.0" y2="190.0" stroke="black" stroke-width="1"/>
+</g>
+<g data-constructor="Connect" data-shape="diamond" data-emphasis="context">
+<path d="M 67.5 69.0 L 93.5 95.0 L 67.5 121.0 L 41.5 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 41.5 95.0 L 67.5 69.0 L 93.5 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 41.5 95.0 L 67.5 121.0 L 93.5 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 67.5 69.0 L 93.5 95.0 L 67.5 121.0 L 41.5 95.0 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<line x1="41.5" y1="95.0" x2="93.5" y2="95.0" stroke="#abb5bd" stroke-width="1"/>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="active">
+<path d="M 250.0 170.0 h 40 v 40 h -40 Z" fill="#b4cea5" stroke="none" stroke-width="1.0"/>
+<path d="M 250.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="black" stroke-width="2.4"/>
+<text x="270.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">b</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="active">
+<path d="M 340.0 170.0 h 40 v 40 h -40 Z" fill="#b4cea5" stroke="none" stroke-width="1.0"/>
+<path d="M 340.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="black" stroke-width="2.4"/>
+<text x="360.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">d</text>
+</g>
+<g data-constructor="Connect" data-shape="diamond" data-emphasis="active">
+<path d="M 315.0 69.0 L 341.0 95.0 L 315.0 121.0 L 289.0 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 289.0 95.0 L 315.0 69.0 L 341.0 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 289.0 95.0 L 315.0 121.0 L 341.0 95.0 Z" fill="#db924f" stroke="none" stroke-width="1.0"/>
+<path d="M 315.0 69.0 L 341.0 95.0 L 315.0 121.0 L 289.0 95.0 Z" fill="none" stroke="black" stroke-width="2.4"/>
+<line x1="289.0" y1="95.0" x2="341.0" y2="95.0" stroke="black" stroke-width="1"/>
+</g>
+<g data-constructor="Overlay" data-shape="circle" data-emphasis="context">
+<path d="M 171.2 0.0 A 20 20 0 1 0 211.2 0.0 A 20 20 0 1 0 171.2 0.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 171.2 0.0 A 20 20 0 0 1 211.2 0.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 171.2 0.0 A 20 20 0 0 0 211.2 0.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 171.2 0.0 A 20 20 0 1 0 211.2 0.0 A 20 20 0 1 0 171.2 0.0 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<line x1="171.2" y1="0.0" x2="211.2" y2="0.0" stroke="#abb5bd" stroke-width="1"/>
+</g>
+</g>
+<g data-neighbor-scene="At:c" data-neighbor-targets="Up:3@0" aria-hidden="true" display="none">
+<line x1="126.4" y1="208.1" x2="99.5" y2="265.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="143.6" y1="208.1" x2="170.5" y2="265.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="56.7" y1="110.2" x2="14.2" y2="170.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="78.3" y1="110.2" x2="123.4" y2="173.7" stroke="#d5dce1" stroke-width="1"/>
+<line x1="306.6" y1="112.6" x2="279.5" y2="170.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="323.4" y1="112.6" x2="350.5" y2="170.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="175.4" y1="12.2" x2="82.2" y2="83.7" stroke="#d5dce1" stroke-width="1"/>
+<line x1="207.1" y1="12.2" x2="300.3" y2="83.7" stroke="#d5dce1" stroke-width="1"/>
+<g data-move="Up"><path data-lane="Up" d="M 99.47 265.00 L 126.44 208.07" fill="none" stroke="#ba743b" stroke-width="2.5" stroke-linecap="round" marker-end="url(#arrow-ba743b)"/>
+</g><path data-pointer="left" d="M 50.0 280.0 L 58.0 285.0 L 50.0 290.0 Z" fill="black"/>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M -20.0 170.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M -20.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="0.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">a</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="active">
+<path d="M 70.0 265.0 h 40 v 40 h -40 Z" fill="#b4cea5" stroke="none" stroke-width="1.0"/>
+<path d="M 70.0 265.0 h 40 v 40 h -40 Z" fill="none" stroke="black" stroke-width="2.4"/>
+<text x="90.0" y="285.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">c</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 160.0 265.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 160.0 265.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="180.0" y="285.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">b</text>
+</g>
+<g data-constructor="Overlay" data-shape="circle" data-emphasis="active">
+<path d="M 115.0 190.0 A 20 20 0 1 0 155.0 190.0 A 20 20 0 1 0 115.0 190.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 115.0 190.0 A 20 20 0 0 1 155.0 190.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 115.0 190.0 A 20 20 0 0 0 155.0 190.0 Z" fill="#db924f" stroke="none" stroke-width="1.0"/>
+<path d="M 115.0 190.0 A 20 20 0 1 0 155.0 190.0 A 20 20 0 1 0 115.0 190.0 Z" fill="none" stroke="black" stroke-width="2.4"/>
+<line x1="115.0" y1="190.0" x2="155.0" y2="190.0" stroke="black" stroke-width="1"/>
+</g>
+<g data-constructor="Connect" data-shape="diamond" data-emphasis="context">
+<path d="M 67.5 69.0 L 93.5 95.0 L 67.5 121.0 L 41.5 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 41.5 95.0 L 67.5 69.0 L 93.5 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 41.5 95.0 L 67.5 121.0 L 93.5 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 67.5 69.0 L 93.5 95.0 L 67.5 121.0 L 41.5 95.0 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<line x1="41.5" y1="95.0" x2="93.5" y2="95.0" stroke="#abb5bd" stroke-width="1"/>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 250.0 170.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 250.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="270.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">b</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 340.0 170.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 340.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="360.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">d</text>
+</g>
+<g data-constructor="Connect" data-shape="diamond" data-emphasis="context">
+<path d="M 315.0 69.0 L 341.0 95.0 L 315.0 121.0 L 289.0 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 289.0 95.0 L 315.0 69.0 L 341.0 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 289.0 95.0 L 315.0 121.0 L 341.0 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 315.0 69.0 L 341.0 95.0 L 315.0 121.0 L 289.0 95.0 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<line x1="289.0" y1="95.0" x2="341.0" y2="95.0" stroke="#abb5bd" stroke-width="1"/>
+</g>
+<g data-constructor="Overlay" data-shape="circle" data-emphasis="context">
+<path d="M 171.2 0.0 A 20 20 0 1 0 211.2 0.0 A 20 20 0 1 0 171.2 0.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 171.2 0.0 A 20 20 0 0 1 211.2 0.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 171.2 0.0 A 20 20 0 0 0 211.2 0.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 171.2 0.0 A 20 20 0 1 0 211.2 0.0 A 20 20 0 1 0 171.2 0.0 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<line x1="171.2" y1="0.0" x2="211.2" y2="0.0" stroke="#abb5bd" stroke-width="1"/>
+</g>
+</g>
+<g data-neighbor-scene="At:d" data-neighbor-targets="Up:7@0" aria-hidden="true" display="none">
+<line x1="126.4" y1="208.1" x2="99.5" y2="265.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="143.6" y1="208.1" x2="170.5" y2="265.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="56.7" y1="110.2" x2="14.2" y2="170.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="78.3" y1="110.2" x2="123.4" y2="173.7" stroke="#d5dce1" stroke-width="1"/>
+<line x1="306.6" y1="112.6" x2="279.5" y2="170.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="323.4" y1="112.6" x2="350.5" y2="170.0" stroke="#d5dce1" stroke-width="1"/>
+<line x1="175.4" y1="12.2" x2="82.2" y2="83.7" stroke="#d5dce1" stroke-width="1"/>
+<line x1="207.1" y1="12.2" x2="300.3" y2="83.7" stroke="#d5dce1" stroke-width="1"/>
+<g data-move="Up"><path data-lane="Up" d="M 350.53 170.00 L 323.36 112.64" fill="none" stroke="#ba743b" stroke-width="2.5" stroke-linecap="round" marker-end="url(#arrow-ba743b)"/>
+</g><path data-pointer="right" d="M 400.0 185.0 L 392.0 190.0 L 400.0 195.0 Z" fill="black"/>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M -20.0 170.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M -20.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="0.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">a</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 70.0 265.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 70.0 265.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="90.0" y="285.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">c</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 160.0 265.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 160.0 265.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="180.0" y="285.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">b</text>
+</g>
+<g data-constructor="Overlay" data-shape="circle" data-emphasis="context">
+<path d="M 115.0 190.0 A 20 20 0 1 0 155.0 190.0 A 20 20 0 1 0 115.0 190.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 115.0 190.0 A 20 20 0 0 1 155.0 190.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 115.0 190.0 A 20 20 0 0 0 155.0 190.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 115.0 190.0 A 20 20 0 1 0 155.0 190.0 A 20 20 0 1 0 115.0 190.0 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<line x1="115.0" y1="190.0" x2="155.0" y2="190.0" stroke="#abb5bd" stroke-width="1"/>
+</g>
+<g data-constructor="Connect" data-shape="diamond" data-emphasis="context">
+<path d="M 67.5 69.0 L 93.5 95.0 L 67.5 121.0 L 41.5 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 41.5 95.0 L 67.5 69.0 L 93.5 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 41.5 95.0 L 67.5 121.0 L 93.5 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 67.5 69.0 L 93.5 95.0 L 67.5 121.0 L 41.5 95.0 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<line x1="41.5" y1="95.0" x2="93.5" y2="95.0" stroke="#abb5bd" stroke-width="1"/>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="context">
+<path d="M 250.0 170.0 h 40 v 40 h -40 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 250.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<text x="270.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">b</text>
+</g>
+<g data-constructor="Vertex" data-shape="box" data-emphasis="active">
+<path d="M 340.0 170.0 h 40 v 40 h -40 Z" fill="#b4cea5" stroke="none" stroke-width="1.0"/>
+<path d="M 340.0 170.0 h 40 v 40 h -40 Z" fill="none" stroke="black" stroke-width="2.4"/>
+<text x="360.0" y="190.0" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="black">d</text>
+</g>
+<g data-constructor="Connect" data-shape="diamond" data-emphasis="active">
+<path d="M 315.0 69.0 L 341.0 95.0 L 315.0 121.0 L 289.0 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 289.0 95.0 L 315.0 69.0 L 341.0 95.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 289.0 95.0 L 315.0 121.0 L 341.0 95.0 Z" fill="#db924f" stroke="none" stroke-width="1.0"/>
+<path d="M 315.0 69.0 L 341.0 95.0 L 315.0 121.0 L 289.0 95.0 Z" fill="none" stroke="black" stroke-width="2.4"/>
+<line x1="289.0" y1="95.0" x2="341.0" y2="95.0" stroke="black" stroke-width="1"/>
+</g>
+<g data-constructor="Overlay" data-shape="circle" data-emphasis="context">
+<path d="M 171.2 0.0 A 20 20 0 1 0 211.2 0.0 A 20 20 0 1 0 171.2 0.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Down" d="M 171.2 0.0 A 20 20 0 0 1 211.2 0.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path data-state="Up" d="M 171.2 0.0 A 20 20 0 0 0 211.2 0.0 Z" fill="#f2f4f5" stroke="none" stroke-width="1.0"/>
+<path d="M 171.2 0.0 A 20 20 0 1 0 211.2 0.0 A 20 20 0 1 0 171.2 0.0 Z" fill="none" stroke="#abb5bd" stroke-width="1.2"/>
+<line x1="171.2" y1="0.0" x2="211.2" y2="0.0" stroke="#abb5bd" stroke-width="1"/>
+</g>
+</g>
+<g data-neighbor-node="0" data-down-state="Down:0" data-up-state="At:a" role="button" tabindex="0" aria-pressed="false"><rect x="-32.00" y="158.00" width="64" height="64" fill="transparent" pointer-events="all"/><rect class="neighbor-focus" x="-28.00" y="162.00" width="56" height="56" rx="4" fill="none" stroke="black" stroke-width="1.5" stroke-dasharray="3 3" opacity="0" pointer-events="none"/></g>
+<g data-neighbor-node="1" data-down-state="Down:1" data-up-state="At:c" role="button" tabindex="0" aria-pressed="false"><rect x="58.00" y="253.00" width="64" height="64" fill="transparent" pointer-events="all"/><rect class="neighbor-focus" x="62.00" y="257.00" width="56" height="56" rx="4" fill="none" stroke="black" stroke-width="1.5" stroke-dasharray="3 3" opacity="0" pointer-events="none"/></g>
+<g data-neighbor-node="2" data-down-state="Down:2" data-up-state="At:b" role="button" tabindex="0" aria-pressed="false"><rect x="148.00" y="253.00" width="64" height="64" fill="transparent" pointer-events="all"/><rect class="neighbor-focus" x="152.00" y="257.00" width="56" height="56" rx="4" fill="none" stroke="black" stroke-width="1.5" stroke-dasharray="3 3" opacity="0" pointer-events="none"/></g>
+<g data-neighbor-node="3" data-down-state="Down:3" data-up-state="Up:3" role="button" tabindex="0" aria-pressed="false"><rect x="103.00" y="158.00" width="64" height="64" fill="transparent" pointer-events="all"/><rect class="neighbor-focus" x="107.00" y="162.00" width="56" height="56" rx="4" fill="none" stroke="black" stroke-width="1.5" stroke-dasharray="3 3" opacity="0" pointer-events="none"/></g>
+<g data-neighbor-node="4" data-down-state="Down:4" data-up-state="Up:4" role="button" tabindex="0" aria-pressed="false"><rect x="35.50" y="63.00" width="64" height="64" fill="transparent" pointer-events="all"/><rect class="neighbor-focus" x="39.50" y="67.00" width="56" height="56" rx="4" fill="none" stroke="black" stroke-width="1.5" stroke-dasharray="3 3" opacity="0" pointer-events="none"/></g>
+<g data-neighbor-node="5" data-down-state="Down:5" data-up-state="At:b" role="button" tabindex="0" aria-pressed="false"><rect x="238.00" y="158.00" width="64" height="64" fill="transparent" pointer-events="all"/><rect class="neighbor-focus" x="242.00" y="162.00" width="56" height="56" rx="4" fill="none" stroke="black" stroke-width="1.5" stroke-dasharray="3 3" opacity="0" pointer-events="none"/></g>
+<g data-neighbor-node="6" data-down-state="Down:6" data-up-state="At:d" role="button" tabindex="0" aria-pressed="false"><rect x="328.00" y="158.00" width="64" height="64" fill="transparent" pointer-events="all"/><rect class="neighbor-focus" x="332.00" y="162.00" width="56" height="56" rx="4" fill="none" stroke="black" stroke-width="1.5" stroke-dasharray="3 3" opacity="0" pointer-events="none"/></g>
+<g data-neighbor-node="7" data-down-state="Down:7" data-up-state="Up:7" role="button" tabindex="0" aria-pressed="false"><rect x="283.00" y="63.00" width="64" height="64" fill="transparent" pointer-events="all"/><rect class="neighbor-focus" x="287.00" y="67.00" width="56" height="56" rx="4" fill="none" stroke="black" stroke-width="1.5" stroke-dasharray="3 3" opacity="0" pointer-events="none"/></g>
+<g data-neighbor-node="8" data-down-state="Down:8" data-up-state="Up:8" role="button" tabindex="0" aria-pressed="false"><rect x="159.25" y="-32.00" width="64" height="64" fill="transparent" pointer-events="all"/><rect class="neighbor-focus" x="163.25" y="-28.00" width="56" height="56" rx="4" fill="none" stroke="black" stroke-width="1.5" stroke-dasharray="3 3" opacity="0" pointer-events="none"/></g>
+</svg>

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+
+
+<svg preserveAspectRatio="xMidYMid meet" width="131pt" height="252pt"
+ viewBox="0.00 0.00 131.00 252.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 248.3)">
+<polygon fill="white" stroke="none" points="-4,4 -4,-248.3 126.6,-248.3 126.6,4 -4,4"/>
+
+<g id="node1" class="node" data-vertex="a">
+
+<ellipse fill="white" stroke="black" cx="60.8" cy="-224.5" rx="19.8" ry="19.8"/>
+<text fill="black" xml:space="preserve" text-anchor="middle" x="60.8" y="-218.7" font-family="Helvetica,sans-Serif" font-size="14.00">a</text>
+</g>
+
+<g id="node2" class="node" data-vertex="b">
+
+<ellipse fill="white" stroke="black" cx="19.8" cy="-122.15" rx="19.8" ry="19.8"/>
+<text fill="black" xml:space="preserve" text-anchor="middle" x="19.8" y="-116.35" font-family="Helvetica,sans-Serif" font-size="14.00">b</text>
+</g>
+
+<g id="edge1" class="edge">
+
+<path fill="none" stroke="black" d="M53.43717687173501,-206.11987933712388L30.509560913839984,-148.88472096418346"/>
+<polygon fill="black" stroke="black" points="27.16282312826499,-140.53012066287613 27.260549685553798,-150.18623010301818 33.75857214212617,-147.58321182534874"/>
+<text xml:space="preserve" text-anchor="middle" x="27.303955086855257" y="-174.53103655533886" font-family="Helvetica,sans-Serif" font-size="12.00"> &#160;1 &#160;</text>
+</g>
+
+<g id="node3" class="node" data-vertex="c">
+
+<ellipse fill="white" stroke="black" cx="102.8" cy="-122.15" rx="19.8" ry="19.8"/>
+<text fill="black" xml:space="preserve" text-anchor="middle" x="102.8" y="-116.35" font-family="Helvetica,sans-Serif" font-size="14.00">c</text>
+</g>
+
+<g id="edge2" class="edge">
+
+<path fill="none" stroke="black" d="M68.3167869851808,-206.18230600158915L91.86649165791883,-148.79391854314306"/>
+<polygon fill="black" stroke="black" points="95.2832130148192,-140.46769399841085 88.62851544607852,-147.46519357101513 95.10446786975913,-150.122643515271"/>
+<text xml:space="preserve" text-anchor="middle" x="94.7519048473612" y="-174.63989988851168" font-family="Helvetica,sans-Serif" font-size="12.00"> &#160;1 &#160;</text>
+</g>
+
+<g id="node4" class="node" data-vertex="d">
+
+<ellipse fill="white" stroke="black" cx="19.8" cy="-19.8" rx="19.8" ry="19.8"/>
+<text fill="black" xml:space="preserve" text-anchor="middle" x="19.8" y="-14" font-family="Helvetica,sans-Serif" font-size="14.00">d</text>
+</g>
+
+<g id="edge3" class="edge">
+
+<path fill="none" stroke="black" d="M19.8,-102.35000000000001L19.8,-48.6"/>
+<polygon fill="black" stroke="black" points="19.8,-39.6 16.3,-48.6 23.3,-48.6"/>
+<text xml:space="preserve" text-anchor="middle" x="33.8" y="-66.97500000000001" font-family="Helvetica,sans-Serif" font-size="12.00"> &#160;2 &#160;</text>
+</g>
+</g>
+</svg>
